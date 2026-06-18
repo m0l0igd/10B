@@ -1,0 +1,351 @@
+import os
+import sys
+import json
+import time
+from collections import defaultdict
+from google.cloud import bigquery
+from google.oauth2.service_account import Credentials
+
+# ---------------------------------------------------------------------------
+# Hierarchy & Mapping Config
+# ---------------------------------------------------------------------------
+HIER = {
+    '366-A': {'mgr':'Antonio Vasquez',   'reg_mgr':'Israel Pino'},
+    '367-A': {'mgr':'Michael Leanox',    'reg_mgr':'Israel Pino'},
+    '368-A': {'mgr':'Thomas Balaci',     'reg_mgr':'Christopher Fuentes'},
+    '369-A': {'mgr':'Alejandro Quijada', 'reg_mgr':'Christopher Fuentes'},
+    '369-B': {'mgr':'Habib Musliu',      'reg_mgr':'Christopher Fuentes'},
+    '370-A': {'mgr':'Aron Valdez',       'reg_mgr':'Ralph Vasquez'},
+    '371-A': {'mgr':'Gustavo Ortiz',     'reg_mgr':'Ralph Vasquez'},
+    '372-A': {'mgr':'Shane Christy',     'reg_mgr':'Ralph Vasquez'},
+    '373-A': {'mgr':'Joshua Drezek',     'reg_mgr':'Israel Pino'},
+    '375-A': {'mgr':'Cody Hoffer',       'reg_mgr':'Gabe Macias'},
+    '384-A': {'mgr':'Jonathan Rivera',   'reg_mgr':'Gabe Macias'},
+    '385-A': {'mgr':'Darien Molina',     'reg_mgr':'Gabe Macias'},
+    '385-B': {'mgr':'John Swonger',      'reg_mgr':'Gabe Macias'},
+    '387-A': {'mgr':'James Chacon',      'reg_mgr':'Gabe Macias'},
+    '387-B': {'mgr':'Ward Cosgrove',     'reg_mgr':'Gabe Macias'},
+}
+
+ROLE_MAP = {
+    'GM TECHNICIAN':             'GM',
+    'HVAC/R TECHNICIAN':         'HVACR',
+    'FOOD EQUIPMENT TECHNICIAN': 'FE',
+    'Shared/Store':              'Store',
+}
+
+MANAGERS_LIST = [
+    ('Michael Leanox',   '367-A', 'Israel Pino',         '367-A', 'parts-inventory'),
+    ('Antonio Vasquez',  '366-A', 'Israel Pino',         '366-A', 'vasquez-inventory'),
+    ('Joshua Drezek',    '373-A', 'Israel Pino',         '373-A', 'drezek-inventory'),
+    ('Thomas Balaci',    '368-A', 'Christopher Fuentes', '368-A', 'inv_368_a'),
+    ('Alejandro Quijada','369-A', 'Christopher Fuentes', '369-A', 'inv_369_a'),
+    ('Habib Musliu',     '369-B', 'Christopher Fuentes', '369-B', 'inv_369_b'),
+    ('Aron Valdez',      '370-A', 'Ralph Vasquez',       '370-A', 'inv_370_a'),
+    ('Gustavo Ortiz',    '371-A', 'Ralph Vasquez',       '371-A', 'inv_371_a'),
+    ('Shane Christy',    '372-A', 'Ralph Vasquez',       '372-A', 'inv_372_a'),
+    ('Cody Hoffer',      '375-A', 'Gabe Macias',         '375-A', 'inv_375_a'),
+    ('Jonathan Rivera',  '384-A', 'Gabe Macias',         '384-A', 'inv_384_a'),
+    ('Darien Molina',    '385-A', 'Gabe Macias',         '385-A', 'inv_385_a'),
+    ('John Swonger',     '385-B', 'Gabe Macias',         '385-B', 'inv_385_b'),
+    ('James Chacon',     '387-A', 'Gabe Macias',         '387-A', 'inv_387_a'),
+    ('Ward Cosgrove',     '387-B', 'Gabe Macias',         '387-B', 'inv_387_b'),
+]
+
+def get_bigquery_client():
+    # If in GitHub Actions, use standard credentials injection
+    if os.environ.get('GITHUB_ACTIONS'):
+        return bigquery.Client(project="re-ods-explorer")
+        
+    try:
+        # Local Windows execution environment
+        adc_path = os.path.join(os.environ.get('APPDATA',''), 'gcloud', 'application_default_credentials.json')
+        if not os.path.exists(adc_path):
+            return None
+        with open(adc_path) as f:
+            adc = json.load(f)
+        from google.oauth2.credentials import Credentials as UserCredentials
+        creds = UserCredentials(
+            token=None,
+            refresh_token=adc['refresh_token'],
+            token_uri='https://oauth2.googleapis.com/token',
+            client_id=adc['client_id'],
+            client_secret=adc['client_secret'],
+        )
+        return bigquery.Client(project="re-ods-explorer", credentials=creds)
+    except Exception as e:
+        print(f"Failed to load BigQuery: {e}")
+        return None
+
+def build_inventory_portal():
+    print(f"[{time.strftime('%X')}] Starting up-to-the-minute 10B Parts Inventory build...")
+    
+    client = get_bigquery_client()
+    if not client:
+        print("Error: BigQuery client not available. Please verify credentials!")
+        return
+
+    # STEP 1 - Query BigQuery for all 15 sub-markets
+    print("Querying semantic_fs_zeus_parts_inventory from BigQuery...")
+    query = """
+    SELECT
+      fs_sub_market,
+      COALESCE(fs_manager_name,'')          AS fs_mgr,
+      COALESCE(fs_regional_manager_name,'') AS fs_rm,
+      COALESCE(vehicle_tech_full_name,'STORE LOCATION') AS tech,
+      COALESCE(vehicle_tech_role,'Shared/Store')         AS role,
+      inventory_storage_area  AS area,
+      inventory_storage_type  AS loc_type,
+      item_id,
+      item_short_description,
+      item_full_description,
+      item_manufacturer,
+      item_manufacturer_part_no,
+      item_unit_of_measure,
+      CAST(item_total_qty_at_location AS INT64)   AS qty,
+      ROUND(item_unit_cost,2)                      AS ucost,
+      ROUND(item_total_cost_at_location,2)         AS tcost,
+      ROUND(storage_area_total_cost,2)             AS area_total,
+      CAST(item_reorder_point AS INT64)            AS rop,
+      CAST(item_max_qty AS INT64)                  AS maxq,
+      item_replenish_flag                          AS rep,
+      CAST(item_last_putaway_date AS STRING)       AS putaway,
+      CAST(item_last_order_date AS STRING)       AS last_order,
+      CAST(item_qty_onhand_global AS INT64)        AS goh
+    FROM `re-ods-prod.us_re_ods_prod_semantic_pub.semantic_fs_zeus_parts_inventory`
+    WHERE fs_region = '10B'
+      AND fs_sub_market IN (
+        '366-A','367-A','368-A','369-A','369-B',
+        '370-A','371-A','372-A','373-A','375-A',
+        '384-A','385-A','385-B','387-A','387-B'
+      )
+    ORDER BY fs_sub_market, tech, tcost DESC
+    """
+    
+    query_job = client.query(query)
+    rows = list(query_job.result())
+    print(f"Successfully retrieved {len(rows)} parts inventory rows!")
+
+    # STEP 2 - Parse and Clean Technicians/Managers
+    parts = []
+    for r in rows:
+        sub = r.fs_sub_market or ''
+        h = HIER.get(sub, {'mgr':'Unknown','reg_mgr':'Unknown'})
+        
+        # Clean and assign real manager row-by-row to prevent incorrect groupings!
+        raw_mgr = r.fs_mgr
+        if raw_mgr and raw_mgr != 'NULL' and '366-A' not in raw_mgr.upper() and '367-A' not in raw_mgr.upper() and 'UNKNOWN' not in raw_mgr.upper():
+            mgr = raw_mgr.title()
+        else:
+            mgr = h['mgr']
+            
+        raw_rm = r.fs_rm
+        if raw_rm and raw_rm != 'NULL' and 'UNKNOWN' not in raw_rm.upper():
+            rm = raw_rm.title()
+        else:
+            rm = h['reg_mgr']
+
+        tech = r.tech or 'STORE LOCATION'
+        # Exclude generic placeholder technicians
+        if tech in ('1', '366-A-FE', '366-A-FS', '367-A-FS', ''):
+            continue
+            
+        display = tech.title() if tech != 'STORE LOCATION' else 'Store Inventory'
+        tc = round(r.tcost, 2) if r.tcost else 0.0
+        if tc <= 0:
+            continue
+
+        parts.append({
+            "sub":  sub,
+            "rm":   rm,
+            "mgr":  mgr,
+            "tech": display,
+            "role": ROLE_MAP.get(r.role or '', r.role or 'Store'),
+            "area": r.area or '',
+            "loc":  r.loc_type or '',
+            "id":   r.item_id or '',
+            "desc": r.item_short_description or '',
+            "fdesc":r.item_full_description or '',
+            "mfr":  r.item_manufacturer or '',
+            "pno":  r.item_manufacturer_part_no or '',
+            "uom":  r.item_unit_of_measure or 'EA',
+            "qty":  int(r.qty) if r.qty else 0,
+            "ucost":round(r.ucost,2) if r.ucost else 0.0,
+            "tcost":tc,
+            "area_total":round(r.area_total,2) if r.area_total else 0.0,
+            "rop":  int(r.rop) if r.rop else 0,
+            "maxq": int(r.maxq) if r.maxq else 0,
+            "rep":  r.rep or 'N',
+            "putaway":  r.putaway,
+            "last_order":r.last_order,
+            "goh":  int(r.goh) if r.goh else 0,
+        })
+
+    # Group tech summaries dynamically based on correct manager alignments!
+    tech_map = defaultdict(lambda:{"items":0,"value":0.0,"area":"","role":"","mgr":"","rm":"","sub":""})
+    for p in parts:
+        k = (p['mgr'], p['tech'])
+        tech_map[k]['items'] += 1
+        tech_map[k]['value']  = round(tech_map[k]['value'] + p['tcost'], 2)
+        tech_map[k]['area']   = p['area']
+        tech_map[k]['role']   = p['role']
+        tech_map[k]['mgr']    = p['mgr']
+        tech_map[k]['rm']     = p['rm']
+        tech_map[k]['sub']    = p['sub']
+
+    techs_summary = [{"tech":k[1],"mgr":v['mgr'],"rm":v['rm'],"role":v['role'],
+                      "area":v['area'],"sub":v['sub'],
+                      "items":v['items'],"value":round(v['value'],2)}
+                     for k,v in tech_map.items()]
+    techs_summary.sort(key=lambda x: (-x['value']))
+
+    # STEP 3 - Compress payload into compact space-saving array
+    rms   = sorted(set(p['rm']   for p in parts))
+    mgrs  = sorted(set(p['mgr']  for p in parts))
+    techs_l = sorted(set(p['tech'] for p in parts))
+    subs  = sorted(set(p['sub']  for p in parts))
+    roles = sorted(set(p['role'] for p in parts))
+    rm_i={v:i for i,v in enumerate(rms)}
+    mgr_i={v:i for i,v in enumerate(mgrs)}
+    tech_i={v:i for i,v in enumerate(techs_l)}
+    sub_i={v:i for i,v in enumerate(subs)}
+    role_i={v:i for i,v in enumerate(roles)}
+
+    compact_parts=[]
+    for p in parts:
+        compact_parts.append([
+            sub_i[p['sub']],rm_i[p['rm']],mgr_i[p['mgr']],tech_i[p['tech']],role_i[p['role']],
+            p['area'],p['id'],p['desc'],p['mfr'] or '',p['pno'] or '',
+            p['qty'],p['ucost'],p['tcost'],p['area_total'],
+            p['rop'],p['maxq'],p['rep'],p['putaway'] or '',p['last_order'] or '',p['goh'],
+        ])
+
+    compact_techs=[]
+    for t in techs_summary:
+        compact_techs.append([
+            tech_i.get(t['tech'],0),mgr_i.get(t['mgr'],0),rm_i.get(t['rm'],0),
+            role_i.get(t['role'],0) if t['role'] in role_i else 0,
+            t['area'],t['items'],round(t['value'],2),
+        ])
+
+    compact_payload={"rms":rms,"mgrs":mgrs,"techs":techs_l,"subs":subs,"roles":roles,
+                     "parts":compact_parts,"tech_rows":compact_techs,"hier":HIER}
+
+    # STEP 4 - Compile HTML Dashboards for all 15 managers + Hub index
+    print("Compiling all 15 sub-market dashboards using accurate mappings...")
+    
+    # Load core template from build_inv_v2.py
+    template_file = "build_inv_v2.py"
+    if not os.path.exists(template_file):
+        template_file = r"C:\Users\Public\build_inv_v2.py"
+        
+    with open(template_file, "r", encoding="utf-8") as f:
+        tmpl_content = f.read()
+    start_idx = tmpl_content.index('HTML = r"""') + len('HTML = r"""')
+    end_idx   = tmpl_content.index('"""', start_idx)
+    tmpl = tmpl_content[start_idx:end_idx]
+
+    results_summary = []
+    for mgr_name, sub, rm_name, label, outname in MANAGERS_LIST:
+        mgr_parts = [p for p in parts if p['mgr'] == mgr_name]
+        if not mgr_parts:
+            continue
+            
+        mgr_tech_map = defaultdict(lambda:{"items":0,"value":0.0,"area":"","role":"","area_total":0})
+        for p in mgr_parts:
+            k = p['tech']
+            mgr_tech_map[k]['items'] += 1
+            mgr_tech_map[k]['value']  = round(mgr_tech_map[k]['value'] + p['tcost'], 2)
+            mgr_tech_map[k]['area']   = p['area']
+            mgr_tech_map[k]['role']   = p['role']
+            mgr_tech_map[k]['area_total'] = p['area_total']
+            
+        mgr_tech_summary = sorted([{"tech":k,"role":v['role'],"area":v['area'],"items":v['items'],
+                                    "value":round(v['value'],2)} for k,v in mgr_tech_map.items()],
+                                   key=lambda x:-x['value'])
+
+        mgr_payload = json.dumps({"parts":mgr_parts,"techs":mgr_tech_summary,"no_inv":[]},
+                                 separators=(',',':'), ensure_ascii=True)
+
+        # Render Manager Specific HTML
+        html = tmpl
+        html = html.replace('📦 367-A Parts Inventory',       f'📦 {sub} Parts Inventory')
+        html = html.replace('Parts Inventory — 367-A',        f'Parts Inventory — {sub}')
+        html = html.replace('Michael Leanox · Manager 367-A', f'{mgr_name} · Manager {sub}')
+        html = html.replace('Manager: M0L0IGD',               f'Sub-Market: {sub} · RM: {rm_name}')
+        html = html.replace('367-A · re-ods-prod',            f'{sub} · re-ods-prod')
+        html = html.replace('PAYLOAD_PLACEHOLDER', mgr_payload)
+
+        # Write file
+        out_filename = f"{outname}.html"
+        with open(out_filename, "w", encoding="utf-8") as f:
+            f.write(html)
+            
+        results_summary.append((mgr_name, sub, out_filename, len(mgr_parts)))
+
+    # STEP 5 - Generate Hub (index.html) organized by Regional Manager
+    RM_ORDER = ['Israel Pino', 'Christopher Fuentes', 'Ralph Vasquez', 'Gabe Macias']
+    RM_EXISTING = {rm_name: [] for rm_name in rms}
+    for mgr_name, sub, out_file, count in results_summary:
+        rm_name = HIER.get(sub, {}).get("reg_mgr", "Israel Pino")
+        RM_EXISTING[rm_name].append((mgr_name, sub, out_file, count))
+
+    # Reconstruct dynamic hub list based on our clean, accurate, non-lazy groupings
+    hub_html = f"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Region 10B Parts Inventory</title>
+<style>
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:32px 24px}}
+h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
+.sub{{font-size:.82rem;color:#8b949e;margin-bottom:28px}}
+.rm-section{{margin-bottom:28px}}
+.rm-title{{font-size:.78rem;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #30363d}}
+.cards{{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}}
+.card{{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px 16px;text-decoration:none;display:block;transition:.12s}}
+.card:hover{{border-color:#58a6ff;background:#1c2432}}
+.ct{{font-size:.9rem;font-weight:700;color:#58a6ff;margin-bottom:3px}}
+.cs{{font-size:.7rem;color:#8b949e;margin-bottom:8px}}
+.cd{{display:flex;gap:14px}}
+.sv{{text-align:center}}.sv-v{{font-size:1.1rem;font-weight:800;color:#e6edf3}}.sv-l{{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}}
+footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px}}
+</style></head><body>
+<div class="nt" style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">📦 Region 10B Parts Inventory</div>
+<div class="sub">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
+"""
+
+    for rm in RM_ORDER:
+        if rm not in RM_EXISTING or not RM_EXISTING[rm]:
+            continue
+        hub_html += f'<div class="rm-section"><div class="rm-title">{rm.upper()}</div><div class="cards">'
+        for mgr_name, sub, out_file, count in sorted(RM_EXISTING[rm], key=lambda x: x[1]):
+            # Sum dynamic total cost
+            mgr_val = sum(p['tcost'] for p in parts if p['mgr'] == mgr_name)
+            hub_html += f"""
+            <a class="card" href="{out_file}">
+                <div class="ct">{mgr_name}</div>
+                <div class="cs">{sub}</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">{count}</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">${mgr_val/1000:.0f}K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            """
+        hub_html += '</div></div>'
+        
+    hub_html += f"""
+<footer>
+    <span>Region 10B • 15 Sub-Markets • re-ods-prod.semantic_fs_zeus_parts_inventory • Refreshed: {time.strftime('%Y-%m-%d %X')}</span>
+</footer>
+</body></html>
+"""
+
+    # Write final index.html
+    with open("index.html", "w", encoding="utf-8") as f:
+        f.write(hub_html)
+        
+    print(f"[{time.strftime('%X')}] Successfully completed 10B Parts Inventory build! Written to index.html!")
+
+if __name__ == "__main__":
+    build_inventory_portal()

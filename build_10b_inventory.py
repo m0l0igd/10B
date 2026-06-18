@@ -275,11 +275,11 @@ def build_inventory_portal():
         html = html.replace('Manager: M0L0IGD',               f'Sub-Market: {sub} · RM: {rm_name}')
         html = html.replace('367-A · re-ods-prod',            f'{sub} · re-ods-prod')
         
-        # Add dynamic navigation links to go to Hub (index.html) or Global Search (10b-inventory.html)
+        # Add dynamic navigation links to go to Hub (index.html) or Global Search (10b-inventory.html) with cache-busting!
         html = html.replace(
             '<button class="nbtn" onclick="copyLink(this)">🔗 Share</button>',
-            '<a href="index.html" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
-            '<a href="10b-inventory.html" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a>'
+            f'<a href="index.html?v={int(time.time())}" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
+            f'<a href="10b-inventory.html?v={int(time.time())}" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a>'
             '<button class="nbtn" onclick="copyLink(this)">🔗 Share</button>'
         )
         
@@ -323,9 +323,9 @@ footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #303
 <div class="nt" style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">📦 Region 10B Parts Inventory</div>
 <div class="sub" style="font-size:.82rem;color:#8b949e;margin-bottom:20px">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
 
-<!-- Prominent Global Search Button using Walmart Colors -->
+<!-- Prominent Global Search Button using Walmart Colors with cache-busting! -->
 <div style="margin-bottom: 25px;">
-    <a href="10b-inventory.html" style="display:inline-flex;align-items:center;background:#0053e2;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;box-shadow:0 3px 10px rgba(0,83,226,0.3);transition:all 0.15s;font-size:0.95rem" onmouseover="this.style.background='#0043b2';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0053e2';this.style.transform='translateY(0)'">
+    <a href="10b-inventory.html?v={int(time.time())}" style="display:inline-flex;align-items:center;background:#0053e2;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;box-shadow:0 3px 10px rgba(0,83,226,0.3);transition:all 0.15s;font-size:0.95rem" onmouseover="this.style.background='#0043b2';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0053e2';this.style.transform='translateY(0)'">
       <span style="font-size:1.1rem;margin-right:8px">🔍</span> Search ALL Region 10B Parts (Global Search)
     </a>
 </div>
@@ -377,10 +377,10 @@ footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #303
         "out = '10b-inventory.html'"
     )
     
-    # Inject navigation link back to hub
+    # Inject navigation link back to hub with cache busting!
     global_tmpl_content = global_tmpl_content.replace(
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>',
-        '<a href="index.html" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
+        f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>'
     )
     

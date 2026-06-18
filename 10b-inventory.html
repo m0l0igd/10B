@@ -100,7 +100,7 @@ window.onerror = function(message, source, lineno, colno, error) {
     <input id="srch" type="text" placeholder="Search tech, location, part #, description, manager..." autocomplete="off">
   </div>
   <div class="nr2">
-    <a href="index.html?v=1781825283" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><button class="btn" onclick="cpLink(this)">&#128279; Share</button>
+    <a href="index.html?v=1781825761" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><button class="btn" onclick="cpLink(this)">&#128279; Share</button>
     <button class="btn" onclick="togT()">&#9728;/&#127769;</button>
   </div>
 </nav>
@@ -270,10 +270,10 @@ function uS(){
 function bP(){
   var vm=F.rm?(RM_MGRS[F.rm]||[]):ALL_MGRS;
   var rh='<button class="hp '+(F.rm?'':'on')+'" onclick="sRM(\'\')">All</button>';
-  ALL_RMS.forEach(function(r){rh+='<button class="hp '+(F.rm===r?'on':'')+'" onclick="sRM('+JSON.stringify(r)+')">'+esc(r)+'</button>';});
+  ALL_RMS.forEach(function(r){rh+='<button class="hp '+(F.rm===r?'on':'')+'" onclick="sRM(\''+esc(r).replace(/'/g, "\\'")+'\')">'+esc(r)+'</button>';});
   ge('rmp').innerHTML=rh;
   var mh='<button class="hp '+(F.mgr?'':'on')+'" onclick="sMGR(\'\')">All</button>';
-  ALL_MGRS.forEach(function(m){mh+='<button class="hp'+(F.mgr===m?' on':'')+(vm.indexOf(m)<0?' hid':'')+'" onclick="sMGR('+JSON.stringify(m)+')">'+esc(m)+'</button>';});
+  ALL_MGRS.forEach(function(m){mh+='<button class="hp'+(F.mgr===m?' on':'')+(vm.indexOf(m)<0?' hid':'')+'" onclick="sMGR(\''+esc(m).replace(/'/g, "\\'")+'\')">'+esc(m)+'</button>';});
   ge('mgp').innerHTML=mh;
 }
 
@@ -291,12 +291,12 @@ function bSB(){
   Object.keys(bm).sort().forEach(function(mgr){
     var tl=bm[mgr].sort(function(a,b){return b.value-a.value;});
     h+='<div class="sgl">'+esc(mgr)+'</div>';
-    h+='<div class="sr '+((!F.tech&&F.mgr===mgr)?'on':'')+'" onclick="sMGR('+JSON.stringify(mgr)+')">'
+    h+='<div class="sr '+((!F.tech&&F.mgr===mgr)?'on':'')+'" onclick="sMGR(\''+esc(mgr).replace(/'/g, "\\'")+'\')">'
       +'<div class="sd" style="background:var(--blue)"></div><div style="flex:1"><div class="sn">All Techs</div></div>'
       +'<div class="sk">'+fK(tl.reduce(function(s,t){return s+t.value;},0))+'</div></div>';
     tl.forEach(function(t){
       var col=RCOL[t.role]||'#bc8cff',on=F.tech===t.tech&&F.mgr===mgr;
-      h+='<div class="sr '+(on?'on':'')+'" onclick="sTech('+JSON.stringify(t.tech)+','+JSON.stringify(mgr)+')">'
+      h+='<div class="sr '+(on?'on':'')+'" onclick="sTech(\''+esc(t.tech).replace(/'/g, "\\'")+'\',\''+esc(mgr).replace(/'/g, "\\'")+'\')">'
         +'<div class="sd" style="background:'+col+'"></div>'
         +'<div style="flex:1;min-width:0"><div class="sn" title="'+esc(t.tech)+'">'+esc(t.tech)+'</div>'
         +'<div class="ss">'+t.role+' - '+t.items+'</div></div>'

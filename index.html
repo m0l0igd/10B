@@ -18,12 +18,26 @@ h1{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}
 .sv{text-align:center}.sv-v{font-size:1.1rem;font-weight:800;color:#e6edf3}.sv-l{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}
 footer{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px}
 </style></head><body>
+
+<!-- Live Javascript Error Diagnoser Block -->
+<div id="error-banner" style="display:none;background:#ffdddd;color:#ea1100;border:2px solid #ea1100;padding:15px;margin:20px 0;border-radius:8px;font-family:monospace;font-size:14px;white-space:pre-wrap;z-index:9999;position:relative;"></div>
+<script>
+window.onerror = function(message, source, lineno, colno, error) {
+  var div = document.getElementById('error-banner');
+  if (div) {
+    div.style.display = 'block';
+    div.innerHTML += '❌ <b>JS Error on Hub:</b> ' + message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\n\n';
+  }
+  return false;
+};
+</script>
+
 <div class="nt" style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">📦 Region 10B Parts Inventory</div>
 <div class="sub" style="font-size:.82rem;color:#8b949e;margin-bottom:20px">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
 
 <!-- Prominent Global Search Button using Walmart Colors with cache-busting! -->
 <div style="margin-bottom: 25px;">
-    <a href="10b-inventory.html?v=1781824260" style="display:inline-flex;align-items:center;background:#0053e2;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;box-shadow:0 3px 10px rgba(0,83,226,0.3);transition:all 0.15s;font-size:0.95rem" onmouseover="this.style.background='#0043b2';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0053e2';this.style.transform='translateY(0)'">
+    <a href="10b-inventory.html?v=1781824565" style="display:inline-flex;align-items:center;background:#0053e2;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;box-shadow:0 3px 10px rgba(0,83,226,0.3);transition:all 0.15s;font-size:0.95rem" onmouseover="this.style.background='#0043b2';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0053e2';this.style.transform='translateY(0)'">
       <span style="font-size:1.1rem;margin-right:8px">🔍</span> Search ALL Region 10B Parts (Global Search)
     </a>
 </div>
@@ -164,6 +178,6 @@ footer{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #3036
             </a>
             </div></div>
 <footer>
-    <span>Region 10B • 15 Sub-Markets • re-ods-prod.semantic_fs_zeus_parts_inventory • Refreshed: 2026-06-18 16:11:00</span>
+    <span>Region 10B • 15 Sub-Markets • re-ods-prod.semantic_fs_zeus_parts_inventory • Refreshed: 2026-06-18 16:16:05</span>
 </footer>
 </body></html>

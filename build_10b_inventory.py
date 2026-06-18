@@ -395,25 +395,22 @@ window.onerror = function(message, source, lineno, colno, error) {{
     with open(build_inv_file, "r", encoding="utf-8") as f:
         global_tmpl_content = f.read()
         
-    # Redirect output destination and JSON source variable
-    global_tmpl_content = global_tmpl_content.replace(
-        "P = open(r'C:\\Users\\Public\\inv_10b_compact.json', encoding='utf-8').read()",
-        "import json\nP = json_payload_str"
-    )
-    global_tmpl_content = global_tmpl_content.replace(
-        "out = r'C:\\Users\\Public\\10b-inventory.html'",
-        "out = '10b-inventory.html'"
-    )
+    start_g = global_tmpl_content.index('HTML = """') + len('HTML = """')
+    end_g   = global_tmpl_content.rindex('"""') # Use rindex to find the absolute final closing quote of the HTML block!
+    global_html = global_tmpl_content[start_g:end_g]
+    
+    # Embed payload directly
+    global_html = global_html.replace('""" + P + """', json.dumps(compact_payload, separators=(',',':')))
     
     # Inject navigation link back to hub with cache busting!
-    global_tmpl_content = global_tmpl_content.replace(
+    global_html = global_html.replace(
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>',
         f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>'
     )
     
     # Inject active error banner diagnoser at top of body
-    global_tmpl_content = global_tmpl_content.replace(
+    global_html = global_html.replace(
         '</style></head><body>',
         '</style></head><body>\n'
         '<div id="error-banner" style="display:none;background:#ffdddd;color:#ea1100;border:2px solid #ea1100;padding:15px;margin:20px;border-radius:8px;font-family:monospace;font-size:14px;white-space:pre-wrap;z-index:9999;position:relative;"></div>\n'
@@ -429,11 +426,8 @@ window.onerror = function(message, source, lineno, colno, error) {{
         '</script>'
     )
     
-    # Execute python compiler block in memory!
-    local_env = {
-        "json_payload_str": json.dumps(compact_payload, separators=(',',':'))
-    }
-    exec(global_tmpl_content, globals(), local_env)
+    with open("10b-inventory.html", "w", encoding="utf-8") as f:
+        f.write(global_html)
     
     # Mirror the newly compiled 10b-inventory.html to C:\Users\Public\ for instant local testing!
     try:

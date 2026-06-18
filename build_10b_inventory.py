@@ -367,22 +367,28 @@ footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #303
     with open(build_inv_file, "r", encoding="utf-8") as f:
         global_tmpl_content = f.read()
         
-    start_g = global_tmpl_content.index('HTML = """') + len('HTML = """')
-    end_g   = global_tmpl_content.index('"""', start_g)
-    global_html = global_tmpl_content[start_g:end_g]
+    # Redirect output destination and JSON source variable
+    global_tmpl_content = global_tmpl_content.replace(
+        "P = open(r'C:\\Users\\Public\\inv_10b_compact.json', encoding='utf-8').read()",
+        "import json\nP = json_payload_str"
+    )
+    global_tmpl_content = global_tmpl_content.replace(
+        "out = r'C:\\Users\\Public\\10b-inventory.html'",
+        "out = '10b-inventory.html'"
+    )
     
-    # Embed payload directly
-    global_html = global_html.replace('""" + P + """', json.dumps(compact_payload, separators=(',',':')))
-    
-    # Inject navigation links back to hub
-    global_html = global_html.replace(
+    # Inject navigation link back to hub
+    global_tmpl_content = global_tmpl_content.replace(
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>',
         '<a href="index.html" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>'
     )
     
-    with open("10b-inventory.html", "w", encoding="utf-8") as f:
-        f.write(global_html)
+    # Execute python compiler block in memory!
+    local_env = {
+        "json_payload_str": json.dumps(compact_payload, separators=(',',':'))
+    }
+    exec(global_tmpl_content, globals(), local_env)
         
     print(f"[{time.strftime('%X')}] Successfully completed 10B Parts Inventory build! Written to index.html and 10b-inventory.html!")
 

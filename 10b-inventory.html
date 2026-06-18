@@ -87,10 +87,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   var div = document.getElementById("error-banner");
   if (div) {
     div.style.display = "block";
-    div.innerHTML += "❌ <b>JS Error on Global Search:</b> " + message + "
-At: " + source + ":" + lineno + ":" + colno + "
-
-";
+    div.innerHTML += "❌ <b>JS Error on Global Search:</b> " + message + "\nAt: " + source + ":" + lineno + ":" + colno + "\n\n";
   }
   return false;
 };
@@ -103,7 +100,7 @@ At: " + source + ":" + lineno + ":" + colno + "
     <input id="srch" type="text" placeholder="Search tech, location, part #, description, manager..." autocomplete="off">
   </div>
   <div class="nr2">
-    <a href="index.html?v=1781824772" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><button class="btn" onclick="cpLink(this)">&#128279; Share</button>
+    <a href="index.html?v=1781825283" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><button class="btn" onclick="cpLink(this)">&#128279; Share</button>
     <button class="btn" onclick="togT()">&#9728;/&#127769;</button>
   </div>
 </nav>
@@ -242,7 +239,7 @@ function rH(p,i){
     +'<div class="ec"><div class="el">Last Putaway</div><div class="ev" style="font-size:.78rem">'+esc(p[PU])+'</div></div>'
     +'<div class="ec"><div class="el">Last Order</div><div class="ev" style="font-size:.78rem">'+esc(p[LO])+'</div></div>'
     +'</div></td></tr>';
-  return '<tr onclick="tX(''+sl+'')"><td><div style="font-weight:600;line-height:1.3;max-width:240px">'+esc(p[DS])+'</div><div style="font-size:.63rem;color:var(--sub);font-family:monospace">'+esc(p[ID])+'</div></td>'
+  return '<tr onclick="tX(\''+sl+'\')"><td><div style="font-weight:600;line-height:1.3;max-width:240px">'+esc(p[DS])+'</div><div style="font-size:.63rem;color:var(--sub);font-family:monospace">'+esc(p[ID])+'</div></td>'
     +'<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">'+td+'</td>'
     +'<td style="font-size:.7rem;color:var(--sub)">'+esc(mgr)+'</td>'
     +'<td><span class="sbg">'+esc(sub)+'</span></td>'
@@ -272,10 +269,10 @@ function uS(){
 
 function bP(){
   var vm=F.rm?(RM_MGRS[F.rm]||[]):ALL_MGRS;
-  var rh='<button class="hp '+(F.rm?'':'on')+'" onclick="sRM('')">All</button>';
+  var rh='<button class="hp '+(F.rm?'':'on')+'" onclick="sRM(\'\')">All</button>';
   ALL_RMS.forEach(function(r){rh+='<button class="hp '+(F.rm===r?'on':'')+'" onclick="sRM('+JSON.stringify(r)+')">'+esc(r)+'</button>';});
   ge('rmp').innerHTML=rh;
-  var mh='<button class="hp '+(F.mgr?'':'on')+'" onclick="sMGR('')">All</button>';
+  var mh='<button class="hp '+(F.mgr?'':'on')+'" onclick="sMGR(\'\')">All</button>';
   ALL_MGRS.forEach(function(m){mh+='<button class="hp'+(F.mgr===m?' on':'')+(vm.indexOf(m)<0?' hid':'')+'" onclick="sMGR('+JSON.stringify(m)+')">'+esc(m)+'</button>';});
   ge('mgp').innerHTML=mh;
 }

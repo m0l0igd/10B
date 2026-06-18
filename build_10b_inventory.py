@@ -289,6 +289,12 @@ def build_inventory_portal():
         out_filename = f"{outname}.html"
         with open(out_filename, "w", encoding="utf-8") as f:
             f.write(html)
+        # Mirror to C:\Users\Public\ for instant local testing!
+        try:
+            with open(os.path.join(r"C:\Users\Public", out_filename), "w", encoding="utf-8") as f:
+                f.write(html)
+        except Exception:
+            pass
             
         results_summary.append((mgr_name, sub, out_filename, len(mgr_parts)))
 
@@ -374,6 +380,14 @@ window.onerror = function(message, source, lineno, colno, error) {{
     # Write final index.html
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(hub_html)
+    # Mirror to C:\Users\Public\ index.html and 10b-hub.html for instant local testing!
+    try:
+        with open(r"C:\Users\Public\index.html", "w", encoding="utf-8") as f:
+            f.write(hub_html)
+        with open(r"C:\Users\Public\10b-hub.html", "w", encoding="utf-8") as f:
+            f.write(hub_html)
+    except Exception:
+        pass
         
     # STEP 6 - Generate Global Search page (10b-inventory.html)
     print("Compiling global search dashboard (10b-inventory.html)...")
@@ -420,6 +434,13 @@ window.onerror = function(message, source, lineno, colno, error) {{
         "json_payload_str": json.dumps(compact_payload, separators=(',',':'))
     }
     exec(global_tmpl_content, globals(), local_env)
+    
+    # Mirror the newly compiled 10b-inventory.html to C:\Users\Public\ for instant local testing!
+    try:
+        import shutil
+        shutil.copy("10b-inventory.html", r"C:\Users\Public\10b-inventory.html")
+    except Exception:
+        pass
         
     print(f"[{time.strftime('%X')}] Successfully completed 10B Parts Inventory build! Written to index.html and 10b-inventory.html!")
 

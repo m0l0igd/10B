@@ -274,6 +274,15 @@ def build_inventory_portal():
         html = html.replace('Michael Leanox · Manager 367-A', f'{mgr_name} · Manager {sub}')
         html = html.replace('Manager: M0L0IGD',               f'Sub-Market: {sub} · RM: {rm_name}')
         html = html.replace('367-A · re-ods-prod',            f'{sub} · re-ods-prod')
+        
+        # Add dynamic navigation links to go to Hub (index.html) or Global Search (10b-inventory.html)
+        html = html.replace(
+            '<button class="nbtn" onclick="copyLink(this)">🔗 Share</button>',
+            '<a href="index.html" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
+            '<a href="10b-inventory.html" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a>'
+            '<button class="nbtn" onclick="copyLink(this)">🔗 Share</button>'
+        )
+        
         html = html.replace('PAYLOAD_PLACEHOLDER', mgr_payload)
 
         # Write file
@@ -312,7 +321,14 @@ h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px}}
 </style></head><body>
 <div class="nt" style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">📦 Region 10B Parts Inventory</div>
-<div class="sub">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
+<div class="sub" style="font-size:.82rem;color:#8b949e;margin-bottom:20px">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
+
+<!-- Prominent Global Search Button using Walmart Colors -->
+<div style="margin-bottom: 25px;">
+    <a href="10b-inventory.html" style="display:inline-flex;align-items:center;background:#0053e2;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;box-shadow:0 3px 10px rgba(0,83,226,0.3);transition:all 0.15s;font-size:0.95rem" onmouseover="this.style.background='#0043b2';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0053e2';this.style.transform='translateY(0)'">
+      <span style="font-size:1.1rem;margin-right:8px">🔍</span> Search ALL Region 10B Parts (Global Search)
+    </a>
+</div>
 """
 
     for rm in RM_ORDER:
@@ -345,7 +361,30 @@ footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #303
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(hub_html)
         
-    print(f"[{time.strftime('%X')}] Successfully completed 10B Parts Inventory build! Written to index.html!")
+    # STEP 6 - Generate Global Search page (10b-inventory.html)
+    print("Compiling global search dashboard (10b-inventory.html)...")
+    build_inv_file = r"C:\Users\Public\build_inv_10b.py"
+    with open(build_inv_file, "r", encoding="utf-8") as f:
+        global_tmpl_content = f.read()
+        
+    start_g = global_tmpl_content.index('HTML = """') + len('HTML = """')
+    end_g   = global_tmpl_content.index('"""', start_g)
+    global_html = global_tmpl_content[start_g:end_g]
+    
+    # Embed payload directly
+    global_html = global_html.replace('""" + P + """', json.dumps(compact_payload, separators=(',',':')))
+    
+    # Inject navigation links back to hub
+    global_html = global_html.replace(
+        '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>',
+        '<a href="index.html" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
+        '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>'
+    )
+    
+    with open("10b-inventory.html", "w", encoding="utf-8") as f:
+        f.write(global_html)
+        
+    print(f"[{time.strftime('%X')}] Successfully completed 10B Parts Inventory build! Written to index.html and 10b-inventory.html!")
 
 if __name__ == "__main__":
     build_inventory_portal()

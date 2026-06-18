@@ -320,6 +320,20 @@ h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .sv{{text-align:center}}.sv-v{{font-size:1.1rem;font-weight:800;color:#e6edf3}}.sv-l{{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}}
 footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px}}
 </style></head><body>
+
+<!-- Live Javascript Error Diagnoser Block -->
+<div id="error-banner" style="display:none;background:#ffdddd;color:#ea1100;border:2px solid #ea1100;padding:15px;margin:20px 0;border-radius:8px;font-family:monospace;font-size:14px;white-space:pre-wrap;z-index:9999;position:relative;"></div>
+<script>
+window.onerror = function(message, source, lineno, colno, error) {{
+  var div = document.getElementById('error-banner');
+  if (div) {{
+    div.style.display = 'block';
+    div.innerHTML += '❌ <b>JS Error on Hub:</b> ' + message + '\\nAt: ' + source + ':' + lineno + ':' + colno + '\\n\\n';
+  }}
+  return false;
+}};
+</script>
+
 <div class="nt" style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">📦 Region 10B Parts Inventory</div>
 <div class="sub" style="font-size:.82rem;color:#8b949e;margin-bottom:20px">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
 
@@ -382,6 +396,23 @@ footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #303
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>',
         f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>'
+    )
+    
+    # Inject active error banner diagnoser at top of body
+    global_tmpl_content = global_tmpl_content.replace(
+        '</style></head><body>',
+        '</style></head><body>\n'
+        '<div id="error-banner" style="display:none;background:#ffdddd;color:#ea1100;border:2px solid #ea1100;padding:15px;margin:20px;border-radius:8px;font-family:monospace;font-size:14px;white-space:pre-wrap;z-index:9999;position:relative;"></div>\n'
+        '<script>\n'
+        'window.onerror = function(message, source, lineno, colno, error) {\n'
+        '  var div = document.getElementById("error-banner");\n'
+        '  if (div) {\n'
+        '    div.style.display = "block";\n'
+        '    div.innerHTML += "❌ <b>JS Error on Global Search:</b> " + message + "\\nAt: " + source + ":" + lineno + ":" + colno + "\\n\\n";\n'
+        '  }\n'
+        '  return false;\n'
+        '};\n'
+        '</script>'
     )
     
     # Execute python compiler block in memory!

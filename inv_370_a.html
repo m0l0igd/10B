@@ -90,11 +90,14 @@ td{padding:7px 10px;vertical-align:middle}
 .ec-s{font-size:.63rem;color:var(--sub);margin-top:2px}
 .no-res{text-align:center;padding:50px 20px;color:var(--sub);font-size:.85rem}
 footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:var(--sub);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-top:20px}
+.home-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 11px;font-size:.85rem;color:#fff;text-decoration:none;line-height:1;white-space:nowrap;transition:.12s;flex-shrink:0}
+.home-btn:hover{background:rgba(255,255,255,.3);border-color:rgba(255,255,255,.5)}
 </style>
 </head>
 <body>
 <!-- PERSISTENT SEARCH — lives in nav, never destroyed -->
 <nav>
+  <a class="home-btn" href="index.html" title="Back to hub">&#127968; Home</a>
   <div class="nav-title">📦 370-A Parts Inventory</div>
   <span class="nav-badge" id="total-badge"></span>
   <div class="srch-wrap">
@@ -206,7 +209,7 @@ function buildRows(){
   tbody.innerHTML=sorted.map((p,i)=>{
     const sl='r'+i;
     // search string baked into data attribute — covers all searchable fields
-    const srchStr=[p.tech,p.area,p.id,p.desc,p.fdesc,p.mfr,p.pno,p.role||'',p.putaway||'',p.last_order||''].join(' ').toLowerCase();
+    const srchStr=[p.tech,p.area,p.id,p.desc,p.fdesc,p.mfr,p.pno,p.role||'',p.putaway||'',p.last_order||''].join(' ').toLowerCase().replace(/"/g,' ').replace(/'/g,' ');
     const rep=p.rep==='Y';
     const det=`<tr class="exp-row hidden" id="exp-${sl}">
       <td colspan="${COLS.length}"><div class="exp-inner">
@@ -248,7 +251,51 @@ function applyFilters(){
   rows.forEach(row=>{
     const expRow=document.getElementById('exp-'+row.dataset.sl);
     const show=
-      (!q || q.trim().split(/\s+/).every(w=>w&&row.dataset.srch.includes(w))) &&
+      (!q || (function(){
+  const SYNS={'valve':['vlv'],'vlv':['valve','vlv'],
+    'condenser':['cndsr','cond'],'cndsr':['condenser'],'cond':['condenser','cndsr'],
+    'compressor':['comp','comprs','compr'],'comp':['compressor'],
+    'filter':['fltr','flt'],'fltr':['filter'],
+    'motor':['mtr','mot'],'mtr':['motor'],
+    'thermostat':['tstat','t-stat'],'tstat':['thermostat'],
+    'sensor':['snsr','sens'],'snsr':['sensor'],
+    'relay':['rly','rlay'],'rly':['relay'],
+    'capacitor':['cap','capac'],'cap':['capacitor'],
+    'contactor':['cont','contct'],'cont':['contactor'],
+    'solenoid':['sol','solen'],'sol':['solenoid'],
+    'pressure':['pres','press'],'pres':['pressure'],'press':['pressure'],
+    'evaporator':['evap'],'evap':['evaporator'],
+    'expansion':['exp','expan'],'exp':['expansion'],
+    'refrigerant':['refrig','refr','ref'],'refrig':['refrigerant'],
+    'temperature':['temp'],'temp':['temperature'],
+    'liquid':['liq'],'liq':['liquid'],
+    'suction':['suct','suc'],'suct':['suction'],
+    'discharge':['disch','disc'],'disch':['discharge'],
+    'control':['ctrl','cntrl'],'ctrl':['control'],
+    'assembly':['assy','assm'],'assy':['assembly'],
+    'electrical':['elec','elect'],'elec':['electrical'],
+    'bearing':['brng','brg'],'brng':['bearing'],
+    'bracket':['brkt','bkt'],'brkt':['bracket'],
+    'switch':['sw','swt','swch'],'sw':['switch'],
+    'fitting':['ftg','fit'],'ftg':['fitting'],
+    'connector':['conn','con'],'conn':['connector'],
+    'heater':['htr','heat'],'htr':['heater'],
+    'coil':['col'],'col':['coil'],
+    'drain':['drn'],'drn':['drain'],
+    'supply':['sup','sply'],'sply':['supply'],
+    'return':['ret','rtn'],'rtn':['return'],
+    'blower':['blwr','blw'],'blwr':['blower'],
+    'fan':['fn'],'fn':['fan'],
+    'pump':['pmp'],'pmp':['pump'],
+    'belt':['blt'],'blt':['belt'],
+    'refrigeration':['refrig','refr']
+  };
+  return q.trim().split(/\s+/).every(function(w){
+    if(!w) return true;
+    var terms=[w].concat(SYNS[w]||[]);
+    return terms.some(function(t){return row.dataset.srch.includes(t);});
+  });
+})()) &&
       (!filters.role || row.dataset.role===filters.role) &&
       (!filters.rep  || row.dataset.rep ===filters.rep)  &&
       (!filters.tech || row.dataset.tech===filters.tech);

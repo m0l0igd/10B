@@ -28,6 +28,8 @@ footer{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #3036
 .gsi-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none}
 #gclr{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8b949e;cursor:pointer;font-size:.85rem;padding:0;line-height:1;display:none}
 .ts-pill{font-size:.68rem;color:#8b949e;background:#161b22;border:1px solid #30363d;border-radius:20px;padding:4px 11px;white-space:nowrap}
+.all-parts-btn{font-size:.75rem;font-weight:600;color:#fff;background:#0053e2;border:1px solid #0053e2;border-radius:20px;padding:5px 14px;text-decoration:none;white-space:nowrap;transition:.12s}
+.all-parts-btn:hover{background:#0040b0;border-color:#0040b0}
 #gs-msg{font-size:.72rem;color:#8b949e;min-height:16px}
 .rm-section.g-hidden{display:none}
 .card.g-hidden{display:none}
@@ -42,6 +44,7 @@ footer{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #3036
       <input id="gsrch" type="text" placeholder="Search technician, manager, or sub-market&#8230;" autocomplete="off" oninput="gs(this.value)">
       <button id="gclr" onclick="gc()" title="Clear">&#10005;</button>
     </div>
+    <a href="10b-inventory.html" class="all-parts-btn" title="Search all parts across every sub-market">&#128269; Search All Parts</a>
     <span class="ts-pill" id="ts-pill">&#8987; Loading&#8230;</span>
   </div>
   <div id="gs-msg"></div>

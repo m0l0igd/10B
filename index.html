@@ -1,4 +1,3 @@
-<!-- build:2026-07-28 -->
 <!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -7,7 +6,7 @@
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:32px 24px}
 h1{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}
-.sub{font-size:.82rem;color:#8b949e;margin-bottom:14px}
+.sub{font-size:.82rem;color:#8b949e;margin-bottom:28px}
 .rm-section{margin-bottom:28px}
 .rm-title{font-size:.78rem;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #30363d}
 .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
@@ -17,119 +16,168 @@ h1{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}
 .cs{font-size:.7rem;color:#8b949e;margin-bottom:8px}
 .cd{display:flex;gap:14px}
 .sv{text-align:center}.sv-v{font-size:1.1rem;font-weight:800;color:#e6edf3}.sv-l{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}
-footer{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
-/* ── Global Search ── */
-.gs-wrap{margin-bottom:18px}
-.gs-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
-.gsi{position:relative;flex:1;min-width:200px;max-width:480px}
-#gsrch{width:100%;background:#161b22;border:1px solid #30363d;border-radius:22px;padding:8px 36px 8px 38px;color:#e6edf3;font-size:.85rem;outline:none;font-family:inherit;transition:.12s}
-#gsrch::placeholder{color:#8b949e}
-#gsrch:focus{border-color:#58a6ff;box-shadow:0 0 0 3px rgba(88,166,255,.12)}
-.gsi-ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.5;pointer-events:none}
-#gclr{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8b949e;cursor:pointer;font-size:.85rem;padding:0;line-height:1;display:none}
-.ts-pill{font-size:.68rem;color:#8b949e;background:#161b22;border:1px solid #30363d;border-radius:20px;padding:4px 11px;white-space:nowrap}
-.all-parts-btn{font-size:.75rem;font-weight:600;color:#fff;background:#0053e2;border:1px solid #0053e2;border-radius:20px;padding:5px 14px;text-decoration:none;white-space:nowrap;transition:.12s}
-.all-parts-btn:hover{background:#0040b0;border-color:#0040b0}
-#gs-msg{font-size:.72rem;color:#8b949e;min-height:16px}
-.rm-section.g-hidden{display:none}
-.card.g-hidden{display:none}
+footer{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px}
 </style></head><body>
-<h1>&#128230; Region 10B Parts Inventory</h1>
-<div class="sub">Select a manager to view their team's inventory &bull; 15 Sub-Markets &bull; re-ods-prod</div>
 
-<div class="gs-wrap">
-  <div class="gs-row">
-    <div class="gsi">
-      <span class="gsi-ico">&#128269;</span>
-      <input id="gsrch" type="text" placeholder="Search technician, manager, or sub-market&#8230;" autocomplete="off" oninput="gs(this.value)">
-      <button id="gclr" onclick="gc()" title="Clear">&#10005;</button>
-    </div>
-    <a href="10b-inventory.html" class="all-parts-btn" title="Search all parts across every sub-market">&#128269; Search All Parts</a>
-    <span class="ts-pill" id="ts-pill">&#8987; Loading&#8230;</span>
-  </div>
-  <div id="gs-msg"></div>
-</div>
-
-<div class="rm-section"><div class="rm-title" style="color:#58a6ff">Israel Pino</div><div class="cards">
-<a class="card" href="parts-inventory.html" data-s="michael leanox 367-a israel pino"><div class="ct">Michael Leanox</div><div class="cs">367-A</div><div class="cd"><div class="sv"><div class="sv-v">464</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="vasquez-inventory.html" data-s="antonio vasquez 366-a israel pino"><div class="ct">Antonio Vasquez</div><div class="cs">366-A</div><div class="cd"><div class="sv"><div class="sv-v">363</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="drezek-inventory.html" data-s="joshua drezek 373-a israel pino"><div class="ct">Joshua Drezek</div><div class="cs">373-A</div><div class="cd"><div class="sv"><div class="sv-v">614</div><div class="sv-l">Items</div></div></div></a>
-</div></div>
-
-<div class="rm-section"><div class="rm-title" style="color:#d29922">Christopher Fuentes</div><div class="cards">
-<a class="card" href="inv_368_a.html" data-s="thomas balaci 368-a christopher fuentes"><div class="ct">Thomas Balaci</div><div class="cs">368-A</div><div class="cd"><div class="sv"><div class="sv-v">217</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_369_a.html" data-s="alejandro quijada 369-a christopher fuentes"><div class="ct">Alejandro Quijada</div><div class="cs">369-A</div><div class="cd"><div class="sv"><div class="sv-v">173</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_369_b.html" data-s="habib musliu 369-b christopher fuentes"><div class="ct">Habib Musliu</div><div class="cs">369-B</div><div class="cd"><div class="sv"><div class="sv-v">105</div><div class="sv-l">Items</div></div></div></a>
-</div></div>
-
-<div class="rm-section"><div class="rm-title" style="color:#bc8cff">Ralph Vasquez</div><div class="cards">
-<a class="card" href="inv_370_a.html" data-s="aron valdez 370-a ralph vasquez"><div class="ct">Aron Valdez</div><div class="cs">370-A</div><div class="cd"><div class="sv"><div class="sv-v">89</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_371_a.html" data-s="gustavo ortiz 371-a ralph vasquez"><div class="ct">Gustavo Ortiz</div><div class="cs">371-A</div><div class="cd"><div class="sv"><div class="sv-v">309</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_372_a.html" data-s="shane christy 372-a ralph vasquez"><div class="ct">Shane Christy</div><div class="cs">372-A</div><div class="cd"><div class="sv"><div class="sv-v">275</div><div class="sv-l">Items</div></div></div></a>
-</div></div>
-
-<div class="rm-section"><div class="rm-title" style="color:#3fb950">Gabe Macias</div><div class="cards">
-<a class="card" href="inv_375_a.html" data-s="cody hoffer 375-a gabe macias"><div class="ct">Cody Hoffer</div><div class="cs">375-A</div><div class="cd"><div class="sv"><div class="sv-v">332</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_384_a.html" data-s="jonathan rivera 384-a gabe macias"><div class="ct">Jonathan Rivera</div><div class="cs">384-A</div><div class="cd"><div class="sv"><div class="sv-v">236</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_385_a.html" data-s="darien molina 385-a gabe macias"><div class="ct">Darien Molina</div><div class="cs">385-A</div><div class="cd"><div class="sv"><div class="sv-v">211</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_385_b.html" data-s="john swonger 385-b gabe macias"><div class="ct">John Swonger</div><div class="cs">385-B</div><div class="cd"><div class="sv"><div class="sv-v">203</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_387_a.html" data-s="james chacon 387-a gabe macias"><div class="ct">James Chacon</div><div class="cs">387-A</div><div class="cd"><div class="sv"><div class="sv-v">238</div><div class="sv-l">Items</div></div></div></a>
-<a class="card" href="inv_387_b.html" data-s="ward cosgrove 387-b gabe macias"><div class="ct">Ward Cosgrove</div><div class="cs">387-B</div><div class="cd"><div class="sv"><div class="sv-v">122</div><div class="sv-l">Items</div></div></div></a>
-</div></div>
-
-<footer>
-  <span>Region 10B &bull; 15 Sub-Markets &bull; re-ods-prod.semantic_fs_zeus_parts_inventory</span>
-  <span id="ts-ft" style="opacity:.7"></span>
-</footer>
-
+<!-- Live Javascript Error Diagnoser Block -->
+<div id="error-banner" style="display:none;background:#ffdddd;color:#ea1100;border:2px solid #ea1100;padding:15px;margin:20px 0;border-radius:8px;font-family:monospace;font-size:14px;white-space:pre-wrap;z-index:9999;position:relative;"></div>
 <script>
-// ── Timestamp: uses file last-modified so it reflects the actual data refresh ──
-(function(){
-  var lm = document.lastModified;
-  if (!lm) return;
-  var d = new Date(lm);
-  if (isNaN(d)) return;
-  var now = new Date();
-  var diff = Math.round((now - d) / 60000);
-  var ago = diff < 2 ? 'just now'
-          : diff < 60 ? diff + 'm ago'
-          : diff < 1440 ? Math.round(diff / 60) + 'h ago'
-          : Math.round(diff / 1440) + 'd ago';
-  var label = '\u23F1 Data as of '
-    + d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'})
-    + ' \u2022 ' + ago;
-  document.getElementById('ts-pill').textContent = label;
-  document.getElementById('ts-ft').textContent   = label;
-})();
-
-// ── Global Search: filters cards + hides empty RM sections ──
-function gs(q) {
-  q = q.trim().toLowerCase();
-  document.getElementById('gclr').style.display = q ? 'block' : 'none';
-  var cards = document.querySelectorAll('.card');
-  var vis = 0, tot = cards.length;
-  cards.forEach(function(c) {
-    // multi-word: every space-separated token must appear in the data-s string
-    var s = (c.dataset.s || '');
-    var ok = !q || q.split(/\s+/).every(function(w) { return s.indexOf(w) >= 0; });
-    c.classList.toggle('g-hidden', !ok);
-    if (ok) vis++;
-  });
-  document.querySelectorAll('.rm-section').forEach(function(sec) {
-    var any = false;
-    sec.querySelectorAll('.card').forEach(function(c) {
-      if (!c.classList.contains('g-hidden')) any = true;
-    });
-    sec.classList.toggle('g-hidden', !any);
-  });
-  var msg = document.getElementById('gs-msg');
-  msg.textContent = q
-    ? (vis === 0 ? 'No matches found.' : vis + ' of ' + tot + ' technicians shown')
-    : '';
-}
-function gc() { document.getElementById('gsrch').value = ''; gs(''); }
-document.getElementById('gsrch').addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') gc();
-});
+window.onerror = function(message, source, lineno, colno, error) {
+  var div = document.getElementById('error-banner');
+  if (div) {
+    div.style.display = 'block';
+    div.innerHTML += '❌ <b>JS Error on Hub:</b> ' + message + '\nAt: ' + source + ':' + lineno + ':' + colno + '\n\n';
+  }
+  return false;
+};
 </script>
+
+<div class="nt" style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">📦 Region 10B Parts Inventory</div>
+<div class="sub" style="font-size:.82rem;color:#8b949e;margin-bottom:20px">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
+
+<!-- Prominent Global Search Button using Walmart Colors with cache-busting! -->
+<div style="margin-bottom: 25px;">
+    <a href="10b-inventory.html?v=1785333607" style="display:inline-flex;align-items:center;background:#0053e2;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;box-shadow:0 3px 10px rgba(0,83,226,0.3);transition:all 0.15s;font-size:0.95rem" onmouseover="this.style.background='#0043b2';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0053e2';this.style.transform='translateY(0)'">
+      <span style="font-size:1.1rem;margin-right:8px">🔍</span> Search ALL Region 10B Parts (Global Search)
+    </a>
+</div>
+<div class="rm-section"><div class="rm-title">ISRAEL PINO</div><div class="cards">
+            <a class="card" href="vasquez-inventory.html">
+                <div class="ct">Antonio Vasquez</div>
+                <div class="cs">366-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">363</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$116K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="parts-inventory.html">
+                <div class="ct">Michael Leanox</div>
+                <div class="cs">367-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">457</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$99K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="drezek-inventory.html">
+                <div class="ct">Joshua Drezek</div>
+                <div class="cs">373-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">615</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$165K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            </div></div><div class="rm-section"><div class="rm-title">CHRISTOPHER FUENTES</div><div class="cards">
+            <a class="card" href="inv_368_a.html">
+                <div class="ct">Thomas Balaci</div>
+                <div class="cs">368-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">218</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$85K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_369_a.html">
+                <div class="ct">Alejandro Quijada</div>
+                <div class="cs">369-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">172</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$40K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_369_b.html">
+                <div class="ct">Habib Musliu</div>
+                <div class="cs">369-B</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">106</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$33K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            </div></div><div class="rm-section"><div class="rm-title">RALPH VASQUEZ</div><div class="cards">
+            <a class="card" href="inv_370_a.html">
+                <div class="ct">Aron Valdez</div>
+                <div class="cs">370-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">89</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$23K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_371_a.html">
+                <div class="ct">Gustavo Ortiz</div>
+                <div class="cs">371-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">310</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$103K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_372_a.html">
+                <div class="ct">Shane Christy</div>
+                <div class="cs">372-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">275</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$65K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            </div></div><div class="rm-section"><div class="rm-title">GABE MACIAS</div><div class="cards">
+            <a class="card" href="inv_375_a.html">
+                <div class="ct">Cody Hoffer</div>
+                <div class="cs">375-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">333</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$133K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_384_a.html">
+                <div class="ct">Jonathan Rivera</div>
+                <div class="cs">384-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">216</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$63K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_385_a.html">
+                <div class="ct">Darien Molina</div>
+                <div class="cs">385-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">211</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$77K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_385_b.html">
+                <div class="ct">John Swonger</div>
+                <div class="cs">385-B</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">203</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$48K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_387_a.html">
+                <div class="ct">James Chacon</div>
+                <div class="cs">387-A</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">237</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$84K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            
+            <a class="card" href="inv_387_b.html">
+                <div class="ct">Ward Cosgrove</div>
+                <div class="cs">387-B</div>
+                <div class="cd">
+                    <div class="sv"><div class="sv-v">122</div><div class="sv-l">Items</div></div>
+                    <div class="sv" style="margin-left:auto"><div class="sv-v">$31K</div><div class="sv-l">Value</div></div>
+                </div>
+            </a>
+            </div></div>
+<footer>
+    <span>Region 10B • 15 Sub-Markets • re-ods-prod.semantic_fs_zeus_parts_inventory • Refreshed: 2026-07-29 07:00:07</span>
+</footer>
 </body></html>

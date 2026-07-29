@@ -341,8 +341,15 @@ function cS(i){var c=CSRT[i];if(SRT.c===c)SRT.a=!SRT.a;else{SRT.c=c;SRT.a=[DS,TI
 function cpLink(btn){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o;},1500);try{navigator.clipboard.writeText(location.href);}catch(e){}}
 
 document.body.classList.toggle('light',!dark);
-ge('tb').textContent=R.parts.length.toLocaleString()+' items';
-ge('rts').textContent='⏱ Data as of Jul 29, 2026 12:19 PM';
-bH();af();
-ge('srch').addEventListener('input',af);
+try{
+  ge('tb').textContent=R.parts.length.toLocaleString()+' items';
+  ge('rts').textContent='Data as of Jul 29, 2026 12:48 PM';
+  bH();af();
+  ge('srch').addEventListener('input',af);
+}catch(err){
+  var eb=document.createElement('div');
+  eb.style='background:#f85149;color:#fff;padding:16px 20px;font-size:.9rem;font-weight:700;position:fixed;top:0;left:0;right:0;z-index:9999';
+  eb.textContent='JS ERROR: '+err.message;
+  document.body.prepend(eb);
+}
 </script></body></html>

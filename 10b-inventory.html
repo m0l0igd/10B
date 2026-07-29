@@ -140,17 +140,13 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <span id="rts"></span>
 </footer>
 <script>
-// Field indices for compact array format
+var _ERR=null;
+try{
 var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19;
-
 var R=JSON.parse(document.getElementById('D').textContent);
-// Expand lookup tables
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
-
 var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:''},SRT={c:12,a:false},filtered=[],page=0;
 var dark=localStorage.getItem('t10b')!=='light';
-
-// Build hierarchy from tech_rows: [ti,mi,rmi,roi,area,items,value]
 var RM_MGRS={},MGR_RM={};
 R.tech_rows.forEach(function(t){
   var rm=RMSV[t[2]],mgr=MGRSV[t[1]];
@@ -159,6 +155,7 @@ R.tech_rows.forEach(function(t){
   MGR_RM[mgr]=rm;
 });
 var ALL_RMS=Object.keys(RM_MGRS).sort(),ALL_MGRS=Object.keys(MGR_RM).sort();
+}catch(e){_ERR='INIT: '+e.message;}
 var RCLS={GM:'gm',HVACR:'hv',FE:'fe',Store:'st'};
 var RCOL={GM:'#58a6ff',HVACR:'#3fb950',FE:'#d29922',Store:'#bc8cff'};
 var SYNS={
@@ -341,15 +338,22 @@ function cS(i){var c=CSRT[i];if(SRT.c===c)SRT.a=!SRT.a;else{SRT.c=c;SRT.a=[DS,TI
 function cpLink(btn){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o;},1500);try{navigator.clipboard.writeText(location.href);}catch(e){}}
 
 document.body.classList.toggle('light',!dark);
-try{
-  ge('tb').textContent=R.parts.length.toLocaleString()+' items';
-  ge('rts').textContent='Data as of Jul 29, 2026 12:48 PM';
-  bH();af();
-  ge('srch').addEventListener('input',af);
-}catch(err){
+if(_ERR){
   var eb=document.createElement('div');
   eb.style='background:#f85149;color:#fff;padding:16px 20px;font-size:.9rem;font-weight:700;position:fixed;top:0;left:0;right:0;z-index:9999';
-  eb.textContent='JS ERROR: '+err.message;
+  eb.textContent='ERROR: '+_ERR;
   document.body.prepend(eb);
+}else{
+  try{
+    ge('tb').textContent=R.parts.length.toLocaleString()+' items';
+    ge('rts').textContent='Data as of Jul 29, 2026 1:18 PM';
+    bH();af();
+    ge('srch').addEventListener('input',af);
+  }catch(err){
+    var eb2=document.createElement('div');
+    eb2.style='background:#f85149;color:#fff;padding:16px 20px;font-size:.9rem;font-weight:700;position:fixed;top:0;left:0;right:0;z-index:9999';
+    eb2.textContent='RENDER ERROR: '+err.message;
+    document.body.prepend(eb2);
+  }
 }
 </script></body></html>

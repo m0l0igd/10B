@@ -161,6 +161,35 @@ R.tech_rows.forEach(function(t){
 var ALL_RMS=Object.keys(RM_MGRS).sort(),ALL_MGRS=Object.keys(MGR_RM).sort();
 var RCLS={GM:'gm',HVACR:'hv',FE:'fe',Store:'st'};
 var RCOL={GM:'#58a6ff',HVACR:'#3fb950',FE:'#d29922',Store:'#bc8cff'};
+var SYNS={
+  'valve':['vlv'],'vlv':['valve'],
+  'condenser':['cndsr','cond'],'cndsr':['condenser'],'cond':['condenser'],
+  'compressor':['comp','comprs'],'comp':['compressor'],
+  'filter':['fltr','flt'],'fltr':['filter'],
+  'motor':['mtr','mot'],'mtr':['motor'],
+  'thermostat':['tstat'],'tstat':['thermostat'],
+  'sensor':['snsr'],'snsr':['sensor'],
+  'relay':['rly'],'rly':['relay'],
+  'capacitor':['cap'],'cap':['capacitor'],
+  'contactor':['cont'],'cont':['contactor'],
+  'solenoid':['sol'],'sol':['solenoid'],
+  'pressure':['pres'],'pres':['pressure'],
+  'evaporator':['evap'],'evap':['evaporator'],
+  'refrigerant':['refrig'],'refrig':['refrigerant'],
+  'temperature':['temp'],'temp':['temperature'],
+  'control':['ctrl'],'ctrl':['control'],
+  'assembly':['assy'],'assy':['assembly'],
+  'electrical':['elec'],'elec':['electrical'],
+  'switch':['sw'],'sw':['switch'],
+  'heater':['htr'],'htr':['heater'],
+  'blower':['blwr'],'blwr':['blower'],
+  'pump':['pmp'],'pmp':['pump'],
+  'liquid':['liq'],'liq':['liquid'],
+  'suction':['suct'],'suct':['suction'],
+  'discharge':['disch'],'disch':['discharge'],
+  'bearing':['brng'],'brng':['bearing'],
+  'bracket':['brkt'],'brkt':['bracket']
+};
 
 function f$(v){return '$'+Number(v).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function fK(v){var n=Number(v);return n>=1000000?'$'+(n/1000000).toFixed(1)+'M':n>=1000?'$'+(n/1000).toFixed(0)+'K':f$(n);}
@@ -191,13 +220,15 @@ function af(){
     if(F.role&&role!==F.role)return false;
     if(F.rep&&p[RE]!==F.rep)return false;
     if(q){
-      var h=[tech,mgr,rm,p[AR],SUBSV[p[SI]],p[ID],p[DS],p[MF],p[PN],ROLESV[p[ROI]],p[PU]||'',p[LO]||''].join(' ').toLowerCase().replace(/"/g,' ');
-      var SYNS={'valve':['vlv'],'vlv':['valve'],'condenser':['cndsr','cond'],'cndsr':['condenser'],'cond':['condenser'],'compressor':['comp','comprs'],'comp':['compressor'],'filter':['fltr','flt'],'fltr':['filter'],'motor':['mtr','mot'],'mtr':['motor'],'thermostat':['tstat','t-stat'],'tstat':['thermostat'],'sensor':['snsr','sens'],'snsr':['sensor'],'relay':['rly'],'rly':['relay'],'capacitor':['cap','capac'],'cap':['capacitor'],'contactor':['cont'],'cont':['contactor'],'solenoid':['sol'],'sol':['solenoid'],'pressure':['pres','press'],'pres':['pressure'],'evaporator':['evap'],'evap':['evaporator'],'expansion':['exp'],'refrigerant':['refrig','ref'],'refrig':['refrigerant'],'temperature':['temp'],'temp':['temperature'],'liquid':['liq'],'liq':['liquid'],'suction':['suct'],'suct':['suction'],'discharge':['disch'],'disch':['discharge'],'control':['ctrl','cntrl'],'ctrl':['control'],'assembly':['assy'],'assy':['assembly'],'electrical':['elec','elect'],'elec':['electrical'],'bearing':['brng'],'brng':['bearing'],'switch':['sw','swt'],'sw':['switch'],'heater':['htr'],'htr':['heater'],'blower':['blwr'],'blwr':['blower'],'pump':['pmp'],'pmp':['pump'],'refrigeration':['refrig']};
-      var ok=q.split(' ').filter(function(w){return w.length>0;}).every(function(w){
-        var terms=[w].concat(SYNS[w]||[]);
-        return terms.some(function(t){return h.indexOf(t)>=0;});
-      });
-      if(!ok)return false;
+      var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
+      var words=q.split(' ');
+      for(var wi=0;wi<words.length;wi++){
+        var w=words[wi];if(!w)continue;
+        var terms=SYNS[w]?[w].concat(SYNS[w]):[w];
+        var found=false;
+        for(var ti=0;ti<terms.length;ti++){if(h.indexOf(terms[ti])>=0){found=true;break;}}
+        if(!found)return false;
+      }
     }
     return true;
   });
@@ -311,7 +342,7 @@ function cpLink(btn){var o=btn.textContent;btn.textContent='Copied!';setTimeout(
 
 document.body.classList.toggle('light',!dark);
 ge('tb').textContent=R.parts.length.toLocaleString()+' items';
-ge('rts').textContent='⏱ Data as of Jul 29, 2026 7:01 AM';
+ge('rts').textContent='⏱ Data as of Jul 29, 2026 12:19 PM';
 bH();af();
 ge('srch').addEventListener('input',af);
 </script></body></html>

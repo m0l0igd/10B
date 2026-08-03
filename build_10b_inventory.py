@@ -426,6 +426,13 @@ window.onerror = function(message, source, lineno, colno, error) {{
         '</script>'
     )
     
+    # Fill in the placeholders that build_inv_10b.py normally substitutes when run
+    # standalone (this file only ever reads that script's HTML *text*, so those
+    # substitutions never actually execute -- must be done here too, or the shipped
+    # HTML ships literal "NI_PLACEHOLDER"/"BUILT_TS" tokens straight into <script> tags).
+    build_ts = time.strftime('%b %d, %Y %I:%M %p')
+    global_html = global_html.replace('BUILT_TS', build_ts).replace('NI_PLACEHOLDER', '[]')
+
     with open("10b-inventory.html", "w", encoding="utf-8") as f:
         f.write(global_html)
     

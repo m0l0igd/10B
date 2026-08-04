@@ -86,6 +86,10 @@ nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:
 .pl{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 11px;font-size:.7rem;color:var(--sub);cursor:pointer;white-space:nowrap;font-family:inherit}
 .pl:hover{border-color:var(--blue);color:var(--blue)}.pl.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
 .pl.gold.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.aib{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px;border:1.5px dashed var(--bd);border-radius:6px;cursor:pointer;color:var(--sub);font-size:.68rem;text-align:center;transition:.12s;min-height:90px}
+.aib:hover{border-color:var(--gold);color:var(--gold)}
+.aib .plus{font-size:1.3rem;line-height:1}
+.mbadge{position:absolute;top:2px;left:2px;background:var(--gold);color:#1a1a1a;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;z-index:1}
 .pl.g.on{background:var(--grn);border-color:var(--grn);color:#fff}
 .dv{width:1px;height:18px;background:var(--bd);flex-shrink:0}
 #fc{font-size:.7rem;color:var(--sub);margin-left:auto}
@@ -176,6 +180,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <button class="pl" data-g="rep" data-v="N" onclick="sF('rep','N',this)">No</button>
   <div class="dv"></div>
   <button class="pl gold" id="imgf" onclick="toggleImgF()">Has Image</button>
+  <button class="pl" id="exportimgs" onclick="exportManualImages()" title="Download the images you've manually added, to send in for a permanent site update">Export My Added Images</button>
   <div class="dv"></div><span id="fc"></span>
 </div>
 <div class="sts">
@@ -288,7 +293,7 @@ function af(){
     if(F.tech&&!(tech===F.tech&&mgr===F.mgr))return false;
     if(F.role&&role!==F.role)return false;
     if(F.rep&&p[RE]!==F.rep)return false;
-    if(F.img&&!p[IMG])return false;
+    if(F.img&&!(p[IMG]||getManualImg(p[PN])))return false;
     if(q){
       var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[FD]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
       var words=q.split(' ');
@@ -327,8 +332,18 @@ function rH(p,i){
   var sl='r'+i,rc=RCLS[ROLESV[p[ROI]]]||'st';
   var tech=TECHSV[p[TI]],mgr=MGRSV[p[MI]],rm=RMSV[p[RI]],sub=SUBSV[p[SI]],role=ROLESV[p[ROI]];
   var td=tech==='Store Inventory'?'<em style="color:var(--sub)">Store Inventory</em>':esc(tech);
+  var manualImg=getManualImg(p[PN]);
+  var imgSrc=p[IMG]||manualImg;
+  var imgBlock;
+  if(imgSrc){
+    imgBlock='<div class="ec" style="display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in;position:relative" onclick="openLb(&#39;'+esc(imgSrc).replace(/'/g,"\\'")+'&#39;,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)">'+(manualImg&&!p[IMG]?'<span class="mbadge">Added by you</span>':'')+'<img src="'+esc(imgSrc)+'" alt="" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display=&#39;none&#39;"></div>';
+  }else if(p[PN]){
+    imgBlock='<div class="aib" onclick="event.stopPropagation();promptAddImage(&#39;'+esc(p[PN]).replace(/'/g,"\\'")+'&#39;,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)"><span class="plus">+</span>Add Image</div>';
+  }else{
+    imgBlock='';
+  }
   var x='<tr class="xr hid" id="x'+sl+'"><td colspan="11"><div class="xi">'
-    +(p[IMG]?'<div class="ec" style="display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in" onclick="openLb(&#39;'+esc(p[IMG]).replace(/'/g,"\\'")+'&#39;,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)"><img src="'+esc(p[IMG])+'" alt="" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display=&#39;none&#39;"></div>':'')
+    +imgBlock
     +'<div class="ec" style="grid-column:1/-1"><div class="el">Full Description</div><div class="ev" style="font-size:.78rem;font-weight:500">'+esc(p[FD]||p[DS]||'—')+'</div></div>'
     +'<div class="ec"><div class="el">Regional Mgr</div><div class="ev" style="font-size:.8rem">'+esc(rm)+'</div><div class="es">Sub: '+esc(sub)+'</div></div>'
     +'<div class="ec"><div class="el">Manufacturer</div><div class="ev" style="font-size:.78rem">'+esc(p[MF])+'</div><div class="es">Part#: '+esc(p[PN])+' - '+role+'</div></div>'
@@ -434,6 +449,38 @@ function toggleImgF(){F.img=!F.img;ge('imgf').classList.toggle('on',F.img);af();
 function openLb(src,alt){ge('lbimg').src=src;ge('lbimg').alt=alt||'';ge('lbov').classList.remove('hid');}
 function closeLb(){ge('lbov').classList.add('hid');ge('lbimg').src='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb();});
+
+// -- MANUAL IMAGE OVERRIDES (localStorage, this browser only until exported) --
+var MANUAL_IMG_KEY='10b_manual_images_v1';
+function getManualImgStore(){
+  try{return JSON.parse(localStorage.getItem(MANUAL_IMG_KEY)||'{}');}catch(e){return{};}
+}
+function getManualImg(pno){
+  if(!pno)return'';
+  return getManualImgStore()[pno.toUpperCase()]||'';
+}
+function promptAddImage(pno,desc){
+  if(!pno){alert('This part has no part number on file, so an image cannot be linked to it.');return;}
+  var url=prompt('Paste an image URL for:\n'+(desc||pno)+'\n\nThis saves to your browser only. Use "Export My Added Images" in the toolbar to send it in for a permanent site update.');
+  if(!url)return;
+  var trimmed=url.trim();
+  if(!trimmed)return;
+  var store=getManualImgStore();
+  store[pno.toUpperCase()]=trimmed;
+  localStorage.setItem(MANUAL_IMG_KEY,JSON.stringify(store));
+  af();
+}
+function exportManualImages(){
+  var store=getManualImgStore();
+  var keys=Object.keys(store);
+  if(!keys.length){alert('You have not added any images yet on this device. Click the "+ Add Image" box on any part without a photo to add one.');return;}
+  var blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='my_added_part_images.json';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  alert('Downloaded '+keys.length+' added image(s) as my_added_part_images.json.\nSend this file in so it can be folded into the next site-wide update for everyone.');
+}
 function cS(i){var c=CSRT[i];if(SRT.c===c)SRT.a=!SRT.a;else{SRT.c=c;SRT.a=[DS,TI,MI,AR,PN,SI].indexOf(c)>=0;}bH();af();}
 function cpLink(btn){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o;},1500);try{navigator.clipboard.writeText(location.href);}catch(e){}}
 

@@ -55,6 +55,8 @@ HIER = {
     '387-B': {'mgr':'Ward Cosgrove',     'reg_mgr':'Gabe Macias'},
 }
 
+MGR_TO_SUB = {v['mgr'].upper(): k for k, v in HIER.items()}
+
 ROLE_MAP = {
     'GM TECHNICIAN':             'GM',
     'HVAC/R TECHNICIAN':         'HVACR',
@@ -161,14 +163,25 @@ def build_inventory_portal():
     for r in rows:
         sub = r.fs_sub_market or ''
         h = HIER.get(sub, {'mgr':'Unknown','reg_mgr':'Unknown'})
-        
+
         # Clean and assign real manager row-by-row to prevent incorrect groupings!
         raw_mgr = r.fs_mgr
         if raw_mgr and raw_mgr != 'NULL' and '366-A' not in raw_mgr.upper() and '367-A' not in raw_mgr.upper() and 'UNKNOWN' not in raw_mgr.upper():
             mgr = raw_mgr.title()
         else:
             mgr = h['mgr']
-            
+
+        # The raw fs_sub_market column is unreliable -- ~38 tech/manager
+        # combos across every region carry a stale sub-market tag (e.g.
+        # Francisco Orozco shows fs_sub_market=366-A even though his real
+        # manager Michael Leanox belongs to 367-A). The manager field is
+        # trustworthy, so once we know the manager, always re-derive the
+        # sub-market from HIER instead of trusting the raw column.
+        correct_sub = MGR_TO_SUB.get(mgr.upper())
+        if correct_sub:
+            sub = correct_sub
+            h = HIER[sub]
+
         raw_rm = r.fs_rm
         if raw_rm and raw_rm != 'NULL' and 'UNKNOWN' not in raw_rm.upper():
             rm = raw_rm.title()

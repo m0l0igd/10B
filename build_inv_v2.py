@@ -109,6 +109,20 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 .lb-close{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:1.3rem;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000}
 .lb-close:hover{background:rgba(255,255,255,.3)}
 .lb-hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:.68rem;z-index:10000;white-space:nowrap}
+/* ADD-IMAGE MODAL */
+.aim-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px}
+.aim-overlay.hidden{display:none}
+.aim-box{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:20px;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.aim-title{font-weight:700;font-size:.95rem;color:var(--tx);margin-bottom:2px}
+.aim-sub{font-size:.72rem;color:var(--sub);margin-bottom:16px}
+.aim-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit}
+.aim-btn:hover{border-color:var(--gold);color:var(--gold)}
+.aim-btn.cancel{background:none;border:none;color:var(--sub);font-weight:500;margin-bottom:0;padding:8px}
+.aim-preview{width:100%;max-height:280px;object-fit:contain;border-radius:8px;margin-bottom:14px;background:var(--bg)}
+.aim-confirm-row{display:flex;gap:10px}
+.aim-confirm-row .aim-btn{margin-bottom:0}
+.aim-btn.yes{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.aim-btn.yes:hover{filter:brightness(1.08);color:#1a1a1a}
 </style>
 </head>
 <body>
@@ -188,6 +202,31 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <div class="lb-hint">Tap outside image or press Esc to close &middot; pinch to zoom</div>
 </div>
 
+<input type="file" id="aim-camera-input" accept="image/*" capture="environment" style="display:none" onchange="aimHandleFile(this)">
+<input type="file" id="aim-library-input" accept="image/*" style="display:none" onchange="aimHandleFile(this)">
+
+<div class="aim-overlay hidden" id="aim-picker" onclick="aimClosePicker()">
+  <div class="aim-box" onclick="event.stopPropagation()">
+    <div class="aim-title">Add a Part Photo</div>
+    <div class="aim-sub" id="aim-picker-desc"></div>
+    <button class="aim-btn" onclick="aimTriggerCamera()">Take Photo</button>
+    <button class="aim-btn" onclick="aimTriggerLibrary()">Choose from Library</button>
+    <button class="aim-btn cancel" onclick="aimClosePicker()">Cancel</button>
+  </div>
+</div>
+
+<div class="aim-overlay hidden" id="aim-confirm">
+  <div class="aim-box" onclick="event.stopPropagation()">
+    <div class="aim-title">Is this the correct part?</div>
+    <div class="aim-sub" id="aim-confirm-desc"></div>
+    <img class="aim-preview" id="aim-confirm-img" src="" alt="Preview">
+    <div class="aim-confirm-row">
+      <button class="aim-btn" onclick="aimRetake()">Retake</button>
+      <button class="aim-btn yes" onclick="aimConfirmYes()">Yes, use this</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const D=PAYLOAD_PLACEHOLDER;
 
@@ -239,8 +278,8 @@ function buildRows(){
     const manualImg=getManualImg(p.pno);
     const imgSrc=p.img||manualImg;
     const imgHtml = imgSrc
-      ? `<div class="ec" style="grid-row:span 2;display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in;position:relative" onclick="event.stopPropagation();openLightbox('${imgSrc.replace(/'/g,"\\'")}','${(p.desc||'').replace(/'/g,"\\'")}')">${manualImg&&!p.img?'<span class="manual-badge">Added by you</span>':''}<img src="${imgSrc}" alt="${p.desc}" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display='none'"></div>`
-      : (p.pno ? `<div class="add-img-box" onclick="event.stopPropagation();promptAddImage('${p.pno.replace(/'/g,"\\'")}','${(p.desc||'').replace(/'/g,"\\'")}',this)"><span class="plus">+</span>Add Image</div>` : '');
+      ? `<div class="ec" style="grid-row:span 2;display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in;position:relative" onclick="event.stopPropagation();openLightbox(this.querySelector('img').src,'${(p.desc||'').replace(/'/g,"\\'")}')">${manualImg&&!p.img?'<span class="manual-badge">Added by you</span>':''}<img src="${imgSrc}" alt="${p.desc}" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display='none'"></div>`
+      : (p.pno ? `<div class="add-img-box" onclick="event.stopPropagation();openAddImagePicker('${p.pno.replace(/'/g,"\\'")}','${(p.desc||'').replace(/'/g,"\\'")}')"><span class="plus">+</span>Add Image</div>` : '');
     const det=`<tr class="exp-row hidden" id="exp-${sl}">
       <td colspan="${COLS.length}"><div class="exp-inner">
         ${imgHtml}
@@ -406,29 +445,98 @@ function getManualImg(pno){
   return getManualImgStore()[pno.toUpperCase()]||'';
 }
 const ADD_IMAGE_EMAIL='Michael.Leanox@walmart.com';
-function promptAddImage(pno,desc,el){
+let aimState={pno:'',desc:'',dataUrl:'',blob:null};
+
+function openAddImagePicker(pno,desc){
   if(!pno){alert('This part has no part number on file, so an image cannot be linked to it.');return;}
-  const url=prompt('Paste an image URL for:\n'+(desc||pno)+'\n\nThis saves to your browser instantly AND opens an email to submit it for a permanent site-wide update.');
-  if(!url)return;
-  const trimmed=url.trim();
-  if(!trimmed)return;
-  const store=getManualImgStore();
-  store[pno.toUpperCase()]=trimmed;
-  localStorage.setItem(MANUAL_IMG_KEY,JSON.stringify(store));
-  buildRows();applyFilters();
-  sendAddImageEmail(pno,desc,trimmed);
+  aimState={pno:pno,desc:desc||'',dataUrl:'',blob:null};
+  document.getElementById('aim-picker-desc').textContent=desc||pno;
+  document.getElementById('aim-picker').classList.remove('hidden');
 }
-function sendAddImageEmail(pno,desc,imgUrl){
+function aimClosePicker(){
+  document.getElementById('aim-picker').classList.add('hidden');
+}
+function aimTriggerCamera(){
+  document.getElementById('aim-camera-input').click();
+}
+function aimTriggerLibrary(){
+  document.getElementById('aim-library-input').click();
+}
+function aimHandleFile(input){
+  const file=input.files&&input.files[0];
+  input.value='';
+  if(!file)return;
+  aimResizeImage(file,900,0.72).then(({dataUrl,blob})=>{
+    aimState.dataUrl=dataUrl;
+    aimState.blob=blob;
+    document.getElementById('aim-picker').classList.add('hidden');
+    document.getElementById('aim-confirm-desc').textContent=aimState.desc||aimState.pno;
+    document.getElementById('aim-confirm-img').src=dataUrl;
+    document.getElementById('aim-confirm').classList.remove('hidden');
+  }).catch(()=>{alert('Could not read that photo. Please try again.');});
+}
+function aimResizeImage(file,maxDim,quality){
+  return new Promise((resolve,reject)=>{
+    const img=new Image();
+    const reader=new FileReader();
+    reader.onload=e=>{
+      img.onload=()=>{
+        let w=img.width,h=img.height;
+        if(w>maxDim||h>maxDim){
+          if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}
+          else{w=Math.round(w*maxDim/h);h=maxDim;}
+        }
+        const canvas=document.createElement('canvas');
+        canvas.width=w;canvas.height=h;
+        canvas.getContext('2d').drawImage(img,0,0,w,h);
+        const dataUrl=canvas.toDataURL('image/jpeg',quality);
+        canvas.toBlob(blob=>resolve({dataUrl,blob}),'image/jpeg',quality);
+      };
+      img.onerror=reject;
+      img.src=e.target.result;
+    };
+    reader.onerror=reject;
+    reader.readAsDataURL(file);
+  });
+}
+function aimRetake(){
+  document.getElementById('aim-confirm').classList.add('hidden');
+  document.getElementById('aim-picker').classList.remove('hidden');
+}
+function aimConfirmYes(){
+  document.getElementById('aim-confirm').classList.add('hidden');
+  const store=getManualImgStore();
+  store[aimState.pno.toUpperCase()]=aimState.dataUrl;
+  try{
+    localStorage.setItem(MANUAL_IMG_KEY,JSON.stringify(store));
+  }catch(e){
+    console.warn('localStorage full -- image will still be emailed but will not persist locally',e);
+  }
+  buildRows();applyFilters();
+  sendAddImagePhoto(aimState.pno,aimState.desc,aimState.blob);
+}
+async function sendAddImagePhoto(pno,desc,blob){
   const subject='10B Portal - New Part Image: '+(pno||'')+(desc?' - '+desc:'');
-  const body='A new part image was submitted from the 10B Parts Inventory portal.\n\n'
+  const bodyText='A new part photo was submitted from the 10B Parts Inventory portal.\n\n'
     +'Part Number: '+(pno||'(none)')+'\n'
-    +'Description: '+(desc||'(none)')+'\n'
-    +'Image URL: '+imgUrl+'\n\n'
-    +'Please add this to manual_overrides.json so it applies for everyone.';
+    +'Description: '+(desc||'(none)')+'\n\n'
+    +'Photo is attached. Please add it to manual_overrides.json so it applies for everyone.';
+  const fileName='part_'+(pno||'photo').replace(/[^a-z0-9]+/gi,'_')+'.jpg';
+  const file=new File([blob],fileName,{type:blob.type||'image/jpeg'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    try{
+      await navigator.share({files:[file],title:subject,text:bodyText});
+      return;
+    }catch(e){/* user cancelled or share failed -- fall through to mailto */}
+  }
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(file);
+  a.download=fileName;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
   const mailto='mailto:'+ADD_IMAGE_EMAIL
     +'?subject='+encodeURIComponent(subject)
-    +'&body='+encodeURIComponent(body);
-  window.location.href=mailto;
+    +'&body='+encodeURIComponent(bodyText+'\n\n(Your browser downloaded '+fileName+' -- please attach it to this email before sending.)');
+  setTimeout(()=>{window.location.href=mailto;},400);
 }
 function exportManualImages(){
   const store=getManualImgStore();

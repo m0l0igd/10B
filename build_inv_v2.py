@@ -95,6 +95,13 @@ td{padding:7px 10px;vertical-align:middle}
 .ec-s{font-size:.63rem;color:var(--sub);margin-top:2px}
 .no-res{text-align:center;padding:50px 20px;color:var(--sub);font-size:.85rem}
 footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:var(--sub);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-top:20px}
+/* LIGHTBOX */
+.lb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.lb-overlay.hidden{display:none}
+.lb-overlay img{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px}
+.lb-close{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:1.3rem;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000}
+.lb-close:hover{background:rgba(255,255,255,.3)}
+.lb-hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:.68rem;z-index:10000;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -124,8 +131,10 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <div class="divr"></div>
   <span class="fl">Rep:</span>
   <button class="pill on" data-g="rep" data-v="" onclick="setFilter('rep','',this)">All</button>
-  <button class="pill g" data-g="rep" data-v="Y" onclick="setFilter('rep','Y',this)">✓ Yes</button>
+  <button class="pill g" data-g="rep" data-v="Y" onclick="setFilter('rep','Y',this)">&#10003; Yes</button>
   <button class="pill" data-g="rep" data-v="N" onclick="setFilter('rep','N',this)">No</button>
+  <div class="divr"></div>
+  <button class="pill" id="img-filter-btn" onclick="toggleImgFilter()">Has Image</button>
   <div class="divr"></div>
   <span id="filter-cnt"></span>
 </div>
@@ -165,11 +174,17 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <span id="refresh-ts"></span>
 </footer>
 
+<div class="lb-overlay hidden" id="lb-overlay" onclick="closeLightbox()">
+  <button class="lb-close" onclick="event.stopPropagation();closeLightbox()" title="Close">&#10005;</button>
+  <img id="lb-img" src="" alt="" onclick="event.stopPropagation()">
+  <div class="lb-hint">Tap outside image or press Esc to close &middot; pinch to zoom</div>
+</div>
+
 <script>
 const D=PAYLOAD_PLACEHOLDER;
 
 // ── state ──────────────────────────────────────────────────────────────────
-let filters={role:'',rep:'',tech:''};
+let filters={role:'',rep:'',tech:'',img:false};
 let sortS={c:'tcost',a:false};
 let dark = localStorage.getItem('inv-theme')!=='light';
 
@@ -213,7 +228,7 @@ function buildRows(){
     // search string baked into data attribute — covers all searchable fields
     const srchStr=[p.tech,p.area,p.id,p.desc,p.fdesc,p.mfr,p.pno].join(' ').toLowerCase();
     const rep=p.rep==='Y';
-    const imgHtml = p.img ? `<div class="ec" style="grid-row:span 2;display:flex;align-items:center;justify-content:center;padding:6px"><img src="${p.img}" alt="${p.desc}" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display='none'"></div>` : '';
+    const imgHtml = p.img ? `<div class="ec" style="grid-row:span 2;display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in" onclick="event.stopPropagation();openLightbox('${p.img.replace(/'/g,"\\'")}','${(p.desc||'').replace(/'/g,"\\'")}')"><img src="${p.img}" alt="${p.desc}" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display='none'"></div>` : '';
     const det=`<tr class="exp-row hidden" id="exp-${sl}">
       <td colspan="${COLS.length}"><div class="exp-inner">
         ${imgHtml}
@@ -231,6 +246,7 @@ function buildRows(){
         data-srch="${srchStr}"
         data-role="${p.role}"
         data-rep="${p.rep}"
+        data-img="${p.img?'1':'0'}"
         data-tech="${p.tech}"
         onclick="togExp('${sl}')">
       <td><div class="c-desc">${p.desc}</div>${(p.fdesc&&p.fdesc!==p.desc)?`<div class="c-fdesc">${p.fdesc}</div>`:''}<div class="c-id">${p.id}</div></td>
@@ -258,6 +274,7 @@ function applyFilters(){
       (!q || row.dataset.srch.includes(q)) &&
       (!filters.role || row.dataset.role===filters.role) &&
       (!filters.rep  || row.dataset.rep ===filters.rep)  &&
+      (!filters.img  || row.dataset.img ==='1')  &&
       (!filters.tech || row.dataset.tech===filters.tech);
     row.classList.toggle('hidden',!show);
     if(expRow && !show) expRow.classList.add('hidden');
@@ -346,9 +363,26 @@ function techFilter(v){
   applyFilters();
   buildSidebar();
 }
+function toggleImgFilter(){
+  filters.img=!filters.img;
+  document.getElementById('img-filter-btn').classList.toggle('on',filters.img);
+  applyFilters();
+}
 function clearSearch(){
   const s=document.getElementById('srch');s.value='';s.focus();applyFilters();
 }
+
+// -- LIGHTBOX -----------------------------------------------------------
+function openLightbox(src,alt){
+  document.getElementById('lb-img').src=src;
+  document.getElementById('lb-img').alt=alt||'';
+  document.getElementById('lb-overlay').classList.remove('hidden');
+}
+function closeLightbox(){
+  document.getElementById('lb-overlay').classList.add('hidden');
+  document.getElementById('lb-img').src='';
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeLightbox();});
 
 // ── LINK ───────────────────────────────────────────────────────────────────
 function copyLink(btn){

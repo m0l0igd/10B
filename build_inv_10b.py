@@ -85,6 +85,8 @@ nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:
 .fl{font-size:.67rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 .pl{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 11px;font-size:.7rem;color:var(--sub);cursor:pointer;white-space:nowrap;font-family:inherit}
 .pl:hover{border-color:var(--blue);color:var(--blue)}.pl.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.pl.gold{border-color:var(--gold);color:var(--gold)}
+.pl.gold:hover{background:rgba(255,194,32,.15);border-color:var(--gold);color:var(--gold)}
 .pl.gold.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
 .aib{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px;border:1.5px dashed var(--bd);border-radius:6px;cursor:pointer;color:var(--sub);font-size:.68rem;text-align:center;transition:.12s;min-height:90px}
 .aib:hover{border-color:var(--gold);color:var(--gold)}
@@ -459,9 +461,10 @@ function getManualImg(pno){
   if(!pno)return'';
   return getManualImgStore()[pno.toUpperCase()]||'';
 }
+var ADD_IMAGE_EMAIL='Michael.Leanox@walmart.com';
 function promptAddImage(pno,desc){
   if(!pno){alert('This part has no part number on file, so an image cannot be linked to it.');return;}
-  var url=prompt('Paste an image URL for:\n'+(desc||pno)+'\n\nThis saves to your browser only. Use "Export My Added Images" in the toolbar to send it in for a permanent site update.');
+  var url=prompt('Paste an image URL for:\n'+(desc||pno)+'\n\nThis saves to your browser instantly AND opens an email to submit it for a permanent site-wide update.');
   if(!url)return;
   var trimmed=url.trim();
   if(!trimmed)return;
@@ -469,6 +472,19 @@ function promptAddImage(pno,desc){
   store[pno.toUpperCase()]=trimmed;
   localStorage.setItem(MANUAL_IMG_KEY,JSON.stringify(store));
   af();
+  sendAddImageEmail(pno,desc,trimmed);
+}
+function sendAddImageEmail(pno,desc,imgUrl){
+  var subject='10B Portal - New Part Image: '+(pno||'')+(desc?' - '+desc:'');
+  var body='A new part image was submitted from the 10B Parts Inventory portal.\n\n'
+    +'Part Number: '+(pno||'(none)')+'\n'
+    +'Description: '+(desc||'(none)')+'\n'
+    +'Image URL: '+imgUrl+'\n\n'
+    +'Please add this to manual_overrides.json so it applies for everyone.';
+  var mailto='mailto:'+ADD_IMAGE_EMAIL
+    +'?subject='+encodeURIComponent(subject)
+    +'&body='+encodeURIComponent(body);
+  window.location.href=mailto;
 }
 function exportManualImages(){
   var store=getManualImgStore();

@@ -39,6 +39,8 @@ nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:
 .add-img-box:hover{border-color:var(--gold);color:var(--gold)}
 .add-img-box .plus{font-size:1.3rem;line-height:1}
 .manual-badge{position:absolute;top:2px;left:2px;background:var(--gold);color:#1a1a1a;font-size:.55rem;font-weight:700;padding:1px 5px;border-radius:3px;z-index:1}
+.pill.r{border-color:var(--red);color:var(--red)}
+.pill.r:hover{background:rgba(248,81,73,.15);border-color:var(--red);color:var(--red)}
 .pill.r.on{background:var(--red);border-color:var(--red);color:#fff}
 .divr{width:1px;height:18px;background:var(--bd);flex-shrink:0;margin:0 3px}
 #filter-cnt{font-size:.7rem;color:var(--sub);margin-left:auto;white-space:nowrap}
@@ -156,7 +158,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <button class="pill" data-g="rep" data-v="N" onclick="setFilter('rep','N',this)">No</button>
   <div class="divr"></div>
   <button class="pill gold" id="img-filter-btn" onclick="toggleImgFilter()">Has Image</button>
-  <button class="pill" id="export-imgs-btn" onclick="exportManualImages()" title="Download the images you've manually added, to send in for a permanent site update">Export My Added Images</button>
+  <button class="pill r" id="noimg-filter-btn" onclick="toggleNoImgFilter()" title="Show only parts that still need a photo">No Image</button>
   <div class="divr"></div>
   <span id="filter-cnt"></span>
 </div>
@@ -231,7 +233,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 const D=PAYLOAD_PLACEHOLDER;
 
 // ── state ──────────────────────────────────────────────────────────────────
-let filters={role:'',rep:'',tech:'',img:false};
+let filters={role:'',rep:'',tech:'',img:false,noimg:false};
 let sortS={c:'tcost',a:false};
 let dark = localStorage.getItem('inv-theme')!=='light';
 
@@ -326,6 +328,7 @@ function applyFilters(){
       (!filters.role || row.dataset.role===filters.role) &&
       (!filters.rep  || row.dataset.rep ===filters.rep)  &&
       (!filters.img  || row.dataset.img ==='1')  &&
+      (!filters.noimg || row.dataset.img ==='0')  &&
       (!filters.tech || row.dataset.tech===filters.tech);
     row.classList.toggle('hidden',!show);
     if(expRow && !show) expRow.classList.add('hidden');
@@ -416,7 +419,14 @@ function techFilter(v){
 }
 function toggleImgFilter(){
   filters.img=!filters.img;
+  if(filters.img){filters.noimg=false;document.getElementById('noimg-filter-btn').classList.remove('on');}
   document.getElementById('img-filter-btn').classList.toggle('on',filters.img);
+  applyFilters();
+}
+function toggleNoImgFilter(){
+  filters.noimg=!filters.noimg;
+  if(filters.noimg){filters.img=false;document.getElementById('img-filter-btn').classList.remove('on');}
+  document.getElementById('noimg-filter-btn').classList.toggle('on',filters.noimg);
   applyFilters();
 }
 function clearSearch(){
@@ -537,17 +547,6 @@ async function sendAddImagePhoto(pno,desc,blob){
     +'?subject='+encodeURIComponent(subject)
     +'&body='+encodeURIComponent(bodyText+'\n\n(Your browser downloaded '+fileName+' -- please attach it to this email before sending.)');
   setTimeout(()=>{window.location.href=mailto;},400);
-}
-function exportManualImages(){
-  const store=getManualImgStore();
-  const keys=Object.keys(store);
-  if(!keys.length){alert('You have not added any images yet on this device. Click the "+ Add Image" box on any part without a photo to add one.');return;}
-  const blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='my_added_part_images.json';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  alert('Downloaded '+keys.length+' added image(s) as my_added_part_images.json.\nSend this file in so it can be folded into the next site-wide update for everyone.');
 }
 function copyLink(btn){
   const u=new URL(location.href.split('?')[0]);

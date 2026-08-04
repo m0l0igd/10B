@@ -13,6 +13,21 @@ from google.oauth2.service_account import Credentials
 # ---------------------------------------------------------------------------
 ENRICHED_PARTS_FILE = r"C:\Users\Public\10B\sdi_scraper\enriched_parts.json"
 
+# Manually-submitted images (via the site's "+ Add Image" button -> "Export
+# My Added Images" -> sent in and merged here). Keyed by uppercased part
+# number, same shape as the exported JSON: {"PART-NO": "https://..."}.
+# These take priority over ZEUS results since a human curated them.
+MANUAL_OVERRIDES_FILE = r"C:\Users\Public\10B\sdi_scraper\manual_overrides.json"
+
+
+def load_manual_overrides():
+    try:
+        with open(MANUAL_OVERRIDES_FILE, encoding="utf-8") as f:
+            raw = json.load(f)
+        return {k.upper(): v for k, v in raw.items() if v and not k.startswith('_')}
+    except Exception:
+        return {}
+
 
 def load_enriched_parts():
     try:
@@ -159,6 +174,8 @@ def build_inventory_portal():
     # STEP 2 - Parse and Clean Technicians/Managers
     enriched = load_enriched_parts()
     print(f"Loaded {len(enriched)} ZEUS-enriched parts (images/descriptions) for merge...")
+    manual_imgs = load_manual_overrides()
+    print(f"Loaded {len(manual_imgs)} manually-submitted images for merge...")
     parts = []
     for r in rows:
         sub = r.fs_sub_market or ''
@@ -222,7 +239,7 @@ def build_inventory_portal():
             "putaway":  r.putaway,
             "last_order":r.last_order,
             "goh":  int(r.goh) if r.goh else 0,
-            "img":  (enriched.get((r.item_manufacturer_part_no or '').upper()) or {}).get("image_url") or '',
+            "img":  manual_imgs.get((r.item_manufacturer_part_no or '').upper()) or (enriched.get((r.item_manufacturer_part_no or '').upper()) or {}).get("image_url") or '',
         })
 
     # Group tech summaries dynamically based on correct manager alignments!

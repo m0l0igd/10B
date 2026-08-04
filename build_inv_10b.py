@@ -88,6 +88,9 @@ nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:
 .pl.gold{border-color:var(--gold);color:var(--gold)}
 .pl.gold:hover{background:rgba(255,194,32,.15);border-color:var(--gold);color:var(--gold)}
 .pl.gold.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.pl.r{border-color:var(--red);color:var(--red)}
+.pl.r:hover{background:rgba(248,81,73,.15);border-color:var(--red);color:var(--red)}
+.pl.r.on{background:var(--red);border-color:var(--red);color:#fff}
 .aib{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:6px;border:1.5px dashed var(--bd);border-radius:6px;cursor:pointer;color:var(--sub);font-size:.68rem;text-align:center;transition:.12s;min-height:90px}
 .aib:hover{border-color:var(--gold);color:var(--gold)}
 .aib .plus{font-size:1.3rem;line-height:1}
@@ -195,7 +198,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <button class="pl" data-g="rep" data-v="N" onclick="sF('rep','N',this)">No</button>
   <div class="dv"></div>
   <button class="pl gold" id="imgf" onclick="toggleImgF()">Has Image</button>
-  <button class="pl" id="exportimgs" onclick="exportManualImages()" title="Download the images you've manually added, to send in for a permanent site update">Export My Added Images</button>
+  <button class="pl r" id="noimgf" onclick="toggleNoImgF()" title="Show only parts that still need a photo">No Image</button>
   <div class="dv"></div><span id="fc"></span>
 </div>
 <div class="sts">
@@ -262,7 +265,7 @@ try{
 var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21;
 var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
-var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false},SRT={c:12,a:false},filtered=[],page=0;
+var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:12,a:false},filtered=[],page=0;
 var dark=localStorage.getItem('t10b')!=='light';
 var RM_MGRS={},MGR_RM={};
 R.tech_rows.forEach(function(t){
@@ -334,6 +337,7 @@ function af(){
     if(F.role&&role!==F.role)return false;
     if(F.rep&&p[RE]!==F.rep)return false;
     if(F.img&&!(p[IMG]||getManualImg(p[PN])))return false;
+    if(F.noimg&&(p[IMG]||getManualImg(p[PN])))return false;
     if(q){
       var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[FD]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
       var words=q.split(' ');
@@ -485,7 +489,8 @@ function sRM(v){F.rm=v;F.mgr='';F.tech='';af();}
 function sMGR(v){F.mgr=v;F.tech='';if(v)F.rm=MGR_RM[v]||F.rm;af();}
 function sTech(t,m){if(F.tech===t&&F.mgr===m){F.tech='';F.mgr='';}else{F.tech=t;F.mgr=m;F.rm=MGR_RM[m]||'';}af();}
 function sF(g,v,btn){F[g]=v;document.querySelectorAll('.pl[data-g="'+g+'"]').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');af();}
-function toggleImgF(){F.img=!F.img;ge('imgf').classList.toggle('on',F.img);af();}
+function toggleImgF(){F.img=!F.img;if(F.img){F.noimg=false;ge('noimgf').classList.remove('on');}ge('imgf').classList.toggle('on',F.img);af();}
+function toggleNoImgF(){F.noimg=!F.noimg;if(F.noimg){F.img=false;ge('imgf').classList.remove('on');}ge('noimgf').classList.toggle('on',F.noimg);af();}
 function openLb(src,alt){ge('lbimg').src=src;ge('lbimg').alt=alt||'';ge('lbov').classList.remove('hid');}
 function closeLb(){ge('lbov').classList.add('hid');ge('lbimg').src='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb();});
@@ -595,17 +600,6 @@ function sendAddImagePhoto(pno,desc,blob){
   }
 }
 
-function exportManualImages(){
-  var store=getManualImgStore();
-  var keys=Object.keys(store);
-  if(!keys.length){alert('You have not added any images yet on this device. Click the "+ Add Image" box on any part without a photo to add one.');return;}
-  var blob=new Blob([JSON.stringify(store,null,2)],{type:'application/json'});
-  var a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='my_added_part_images.json';
-  document.body.appendChild(a);a.click();document.body.removeChild(a);
-  alert('Downloaded '+keys.length+' added image(s) as my_added_part_images.json.\nSend this file in so it can be folded into the next site-wide update for everyone.');
-}
 function cS(i){var c=CSRT[i];if(SRT.c===c)SRT.a=!SRT.a;else{SRT.c=c;SRT.a=[DS,TI,MI,AR,PN,SI].indexOf(c)>=0;}bH();af();}
 function cpLink(btn){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o;},1500);try{navigator.clipboard.writeText(location.href);}catch(e){}}
 

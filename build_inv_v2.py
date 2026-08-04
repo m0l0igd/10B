@@ -73,6 +73,7 @@ tbody tr.hidden{display:none!important}
 td{padding:7px 10px;vertical-align:middle}
 /* CELL STYLES */
 .c-desc{font-weight:600;color:var(--tx);line-height:1.3;max-width:260px}
+.c-fdesc{font-size:.66rem;color:var(--sub);line-height:1.25;margin-top:1px;max-width:260px}
 .c-id{font-size:.63rem;color:var(--sub);font-family:monospace;margin-top:1px}
 .c-tech{font-weight:500;white-space:nowrap}
 .c-area{font-family:monospace;font-size:.75rem;font-weight:600}
@@ -230,7 +231,7 @@ function buildRows(){
         data-rep="${p.rep}"
         data-tech="${p.tech}"
         onclick="togExp('${sl}')">
-      <td><div class="c-desc">${p.desc}</div><div class="c-id">${p.id}</div></td>
+      <td><div class="c-desc">${p.desc}</div>${(p.fdesc&&p.fdesc!==p.desc)?`<div class="c-fdesc">${p.fdesc}</div>`:''}<div class="c-id">${p.id}</div></td>
       <td class="c-tech">${p.tech==='Store Inventory'?'<em style="color:var(--sub)">Store Inventory</em>':p.tech}</td>
       <td><span class="rb ${ROLE_CLS[p.role]||'rb-st'}">${p.role}</span></td>
       <td class="c-area">${p.area}</td>

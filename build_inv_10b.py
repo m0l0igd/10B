@@ -58,7 +58,7 @@ HTML = """<!DOCTYPE html>
 <title>Region 10B Parts Inventory</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--bd:#30363d;--tx:#e6edf3;--sub:#8b949e;--blue:#58a6ff;--grn:#3fb950;--red:#f85149;--amb:#d29922;--pur:#bc8cff;--wmt:#0071ce;--wmt2:#004f9e}
+:root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--bd:#30363d;--tx:#e6edf3;--sub:#8b949e;--blue:#58a6ff;--grn:#3fb950;--red:#f85149;--amb:#d29922;--pur:#bc8cff;--wmt:#0071ce;--wmt2:#004f9e;--gold:#ffc220}
 body.light{--bg:#f6f8fa;--s1:#fff;--s2:#f6f8fa;--bd:#d0d7de;--tx:#1f2328;--sub:#57606a;--blue:#0969da;--grn:#1a7f37;--red:#cf222e;--amb:#9a6700;--pur:#8250df}
 body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px}
 nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
@@ -85,6 +85,7 @@ nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:
 .fl{font-size:.67rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 .pl{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 11px;font-size:.7rem;color:var(--sub);cursor:pointer;white-space:nowrap;font-family:inherit}
 .pl:hover{border-color:var(--blue);color:var(--blue)}.pl.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.pl.gold.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
 .pl.g.on{background:var(--grn);border-color:var(--grn);color:#fff}
 .dv{width:1px;height:18px;background:var(--bd);flex-shrink:0}
 #fc{font-size:.7rem;color:var(--sub);margin-left:auto}
@@ -174,7 +175,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <button class="pl g" data-g="rep" data-v="Y" onclick="sF('rep','Y',this)">&#10003; Yes</button>
   <button class="pl" data-g="rep" data-v="N" onclick="sF('rep','N',this)">No</button>
   <div class="dv"></div>
-  <button class="pl" id="imgf" onclick="toggleImgF()">Has Image</button>
+  <button class="pl gold" id="imgf" onclick="toggleImgF()">Has Image</button>
   <div class="dv"></div><span id="fc"></span>
 </div>
 <div class="sts">

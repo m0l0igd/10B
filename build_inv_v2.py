@@ -213,8 +213,10 @@ function buildRows(){
     // search string baked into data attribute — covers all searchable fields
     const srchStr=[p.tech,p.area,p.id,p.desc,p.fdesc,p.mfr,p.pno].join(' ').toLowerCase();
     const rep=p.rep==='Y';
+    const imgHtml = p.img ? `<div class="ec" style="grid-row:span 2;display:flex;align-items:center;justify-content:center;padding:6px"><img src="${p.img}" alt="${p.desc}" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display='none'"></div>` : '';
     const det=`<tr class="exp-row hidden" id="exp-${sl}">
       <td colspan="${COLS.length}"><div class="exp-inner">
+        ${imgHtml}
         <div class="ec"><div class="ec-l">Full Description</div><div class="ec-v" style="font-size:.75rem;font-weight:500">${p.fdesc||p.desc||'—'}</div></div>
         <div class="ec"><div class="ec-l">Manufacturer</div><div class="ec-v" style="font-size:.8rem">${p.mfr||'—'}</div><div class="ec-s">Part #: ${p.pno||'—'} · UOM: ${p.uom}</div></div>
         <div class="ec"><div class="ec-l">Unit Cost</div><div class="ec-v">${fmt$(p.ucost)}</div></div>

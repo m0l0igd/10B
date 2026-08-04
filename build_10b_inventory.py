@@ -7,6 +7,34 @@ from google.cloud import bigquery
 from google.oauth2.service_account import Credentials
 
 # ---------------------------------------------------------------------------
+# ZEUS image/description enrichment (populated incrementally by
+# sdi_scraper/batch_fetch_parts.py -- safe no-op if the file doesn't exist
+# yet or a given part hasn't been scraped). Keyed by uppercased part number.
+# ---------------------------------------------------------------------------
+ENRICHED_PARTS_FILE = r"C:\Users\Public\10B\sdi_scraper\enriched_parts.json"
+
+
+def load_enriched_parts():
+    try:
+        with open(ENRICHED_PARTS_FILE, encoding="utf-8") as f:
+            rows = json.load(f)
+        result = {}
+        for r in rows:
+            if not r.get("pno"):
+                continue
+            img = r.get("image_url") or ""
+            # ZEUS's own "no photo available" placeholder is a relative path
+            # that only resolves on their domain -- treat it as no image.
+            if img.startswith("/Images/"):
+                img = ""
+            r = dict(r)
+            r["image_url"] = img
+            result[r["pno"].upper()] = r
+        return result
+    except Exception:
+        return {}
+
+# ---------------------------------------------------------------------------
 # Hierarchy & Mapping Config
 # ---------------------------------------------------------------------------
 HIER = {
@@ -127,6 +155,8 @@ def build_inventory_portal():
     print(f"Successfully retrieved {len(rows)} parts inventory rows!")
 
     # STEP 2 - Parse and Clean Technicians/Managers
+    enriched = load_enriched_parts()
+    print(f"Loaded {len(enriched)} ZEUS-enriched parts (images/descriptions) for merge...")
     parts = []
     for r in rows:
         sub = r.fs_sub_market or ''
@@ -179,6 +209,7 @@ def build_inventory_portal():
             "putaway":  r.putaway,
             "last_order":r.last_order,
             "goh":  int(r.goh) if r.goh else 0,
+            "img":  (enriched.get((r.item_manufacturer_part_no or '').upper()) or {}).get("image_url") or '',
         })
 
     # Group tech summaries dynamically based on correct manager alignments!

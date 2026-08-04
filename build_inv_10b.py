@@ -135,6 +135,12 @@ td{padding:7px 10px;vertical-align:middle}
 .lbtn:hover{background:var(--s1)}
 .nores{text-align:center;padding:50px;color:var(--sub);font-size:.85rem}
 footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:var(--sub);display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px;margin-top:16px}
+.lb-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;overflow:auto}
+.lb-overlay.hid{display:none!important}
+.lb-overlay img{max-width:100%;max-height:100%;object-fit:contain;border-radius:4px}
+.lb-close{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:1.3rem;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000}
+.lb-close:hover{background:rgba(255,255,255,.3)}
+.lb-hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:.68rem;z-index:10000;white-space:nowrap}
 </style></head><body>
 <script>var _D=""" + P + """;</script>
 <script>var NI=NI_PLACEHOLDER;</script>
@@ -167,6 +173,8 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <button class="pl on" data-g="rep" data-v="" onclick="sF('rep','',this)">All</button>
   <button class="pl g" data-g="rep" data-v="Y" onclick="sF('rep','Y',this)">&#10003; Yes</button>
   <button class="pl" data-g="rep" data-v="N" onclick="sF('rep','N',this)">No</button>
+  <div class="dv"></div>
+  <button class="pl" id="imgf" onclick="toggleImgF()">Has Image</button>
   <div class="dv"></div><span id="fc"></span>
 </div>
 <div class="sts">
@@ -194,6 +202,11 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <span>Region 10B - 15 Sub-Markets - re-ods-prod.semantic_fs_zeus_parts_inventory</span>
   <span id="rts"></span>
 </footer>
+<div class="lb-overlay hid" id="lbov" onclick="closeLb()">
+  <button class="lb-close" onclick="event.stopPropagation();closeLb()" title="Close">&#10005;</button>
+  <img id="lbimg" src="" alt="" onclick="event.stopPropagation()">
+  <div class="lb-hint">Tap outside image or press Esc to close &middot; pinch to zoom</div>
+</div>
 <script>
 window.onerror=function(msg,src,line,col,err){var d=document.createElement('div');d.style='background:#f85149;color:#fff;padding:20px;font-size:14px;font-family:monospace;position:fixed;top:10px;left:10px;right:10px;z-index:99999;white-space:pre-wrap';d.textContent='JS ERR: '+msg+' | line:'+line+' col:'+col;document.body.prepend(d);return true;};
 </script>
@@ -203,7 +216,7 @@ try{
 var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21;
 var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
-var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:''},SRT={c:12,a:false},filtered=[],page=0;
+var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false},SRT={c:12,a:false},filtered=[],page=0;
 var dark=localStorage.getItem('t10b')!=='light';
 var RM_MGRS={},MGR_RM={};
 R.tech_rows.forEach(function(t){
@@ -274,6 +287,7 @@ function af(){
     if(F.tech&&!(tech===F.tech&&mgr===F.mgr))return false;
     if(F.role&&role!==F.role)return false;
     if(F.rep&&p[RE]!==F.rep)return false;
+    if(F.img&&!p[IMG])return false;
     if(q){
       var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[FD]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
       var words=q.split(' ');
@@ -313,7 +327,7 @@ function rH(p,i){
   var tech=TECHSV[p[TI]],mgr=MGRSV[p[MI]],rm=RMSV[p[RI]],sub=SUBSV[p[SI]],role=ROLESV[p[ROI]];
   var td=tech==='Store Inventory'?'<em style="color:var(--sub)">Store Inventory</em>':esc(tech);
   var x='<tr class="xr hid" id="x'+sl+'"><td colspan="11"><div class="xi">'
-    +(p[IMG]?'<div class="ec" style="display:flex;align-items:center;justify-content:center;padding:6px"><img src="'+esc(p[IMG])+'" alt="" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display=&#39;none&#39;"></div>':'')
+    +(p[IMG]?'<div class="ec" style="display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in" onclick="openLb(&#39;'+esc(p[IMG]).replace(/'/g,"\\'")+'&#39;,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)"><img src="'+esc(p[IMG])+'" alt="" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display=&#39;none&#39;"></div>':'')
     +'<div class="ec" style="grid-column:1/-1"><div class="el">Full Description</div><div class="ev" style="font-size:.78rem;font-weight:500">'+esc(p[FD]||p[DS]||'—')+'</div></div>'
     +'<div class="ec"><div class="el">Regional Mgr</div><div class="ev" style="font-size:.8rem">'+esc(rm)+'</div><div class="es">Sub: '+esc(sub)+'</div></div>'
     +'<div class="ec"><div class="el">Manufacturer</div><div class="ev" style="font-size:.78rem">'+esc(p[MF])+'</div><div class="es">Part#: '+esc(p[PN])+' - '+role+'</div></div>'
@@ -415,6 +429,10 @@ function sRM(v){F.rm=v;F.mgr='';F.tech='';af();}
 function sMGR(v){F.mgr=v;F.tech='';if(v)F.rm=MGR_RM[v]||F.rm;af();}
 function sTech(t,m){if(F.tech===t&&F.mgr===m){F.tech='';F.mgr='';}else{F.tech=t;F.mgr=m;F.rm=MGR_RM[m]||'';}af();}
 function sF(g,v,btn){F[g]=v;document.querySelectorAll('.pl[data-g="'+g+'"]').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');af();}
+function toggleImgF(){F.img=!F.img;ge('imgf').classList.toggle('on',F.img);af();}
+function openLb(src,alt){ge('lbimg').src=src;ge('lbimg').alt=alt||'';ge('lbov').classList.remove('hid');}
+function closeLb(){ge('lbov').classList.add('hid');ge('lbimg').src='';}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb();});
 function cS(i){var c=CSRT[i];if(SRT.c===c)SRT.a=!SRT.a;else{SRT.c=c;SRT.a=[DS,TI,MI,AR,PN,SI].indexOf(c)>=0;}bH();af();}
 function cpLink(btn){var o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o;},1500);try{navigator.clipboard.writeText(location.href);}catch(e){}}
 

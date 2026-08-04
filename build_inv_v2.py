@@ -8,7 +8,7 @@ HTML = r"""<!DOCTYPE html>
 <title>367-A Parts Inventory</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--bd:#30363d;--tx:#e6edf3;--sub:#8b949e;--blue:#58a6ff;--grn:#3fb950;--red:#f85149;--amb:#d29922;--pur:#bc8cff;--wmt:#0071ce}
+:root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--bd:#30363d;--tx:#e6edf3;--sub:#8b949e;--blue:#58a6ff;--grn:#3fb950;--red:#f85149;--amb:#d29922;--pur:#bc8cff;--wmt:#0071ce;--gold:#ffc220}
 body.light{--bg:#f6f8fa;--s1:#fff;--s2:#f6f8fa;--bd:#d0d7de;--tx:#1f2328;--sub:#57606a;--blue:#0969da;--grn:#1a7f37;--red:#cf222e;--amb:#9a6700;--pur:#8250df}
 body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;min-height:100vh}
 /* NAV */
@@ -32,6 +32,7 @@ nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:
 .pill{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 11px;font-size:.7rem;color:var(--sub);cursor:pointer;white-space:nowrap;transition:.12s;font-family:inherit}
 .pill:hover{border-color:var(--blue);color:var(--blue)}.pill.on{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
 .pill.g.on{background:var(--grn);border-color:var(--grn);color:#fff}
+.pill.gold.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
 .pill.r.on{background:var(--red);border-color:var(--red);color:#fff}
 .divr{width:1px;height:18px;background:var(--bd);flex-shrink:0;margin:0 3px}
 #filter-cnt{font-size:.7rem;color:var(--sub);margin-left:auto;white-space:nowrap}
@@ -134,7 +135,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <button class="pill g" data-g="rep" data-v="Y" onclick="setFilter('rep','Y',this)">&#10003; Yes</button>
   <button class="pill" data-g="rep" data-v="N" onclick="setFilter('rep','N',this)">No</button>
   <div class="divr"></div>
-  <button class="pill" id="img-filter-btn" onclick="toggleImgFilter()">Has Image</button>
+  <button class="pill gold" id="img-filter-btn" onclick="toggleImgFilter()">Has Image</button>
   <div class="divr"></div>
   <span id="filter-cnt"></span>
 </div>

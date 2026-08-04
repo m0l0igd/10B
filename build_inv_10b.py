@@ -148,6 +148,19 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 .lb-close{position:fixed;top:14px;right:18px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:1.3rem;line-height:1;width:40px;height:40px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;z-index:10000}
 .lb-close:hover{background:rgba(255,255,255,.3)}
 .lb-hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:rgba(255,255,255,.6);font-size:.68rem;z-index:10000;white-space:nowrap}
+.aim-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:10001;display:flex;align-items:center;justify-content:center;padding:20px}
+.aim-overlay.hid{display:none}
+.aim-box{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:20px;max-width:360px;width:100%;box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.aim-title{font-weight:700;font-size:.95rem;color:var(--tx);margin-bottom:2px}
+.aim-sub{font-size:.72rem;color:var(--sub);margin-bottom:16px}
+.aim-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:8px;border:1.5px solid var(--bd);background:var(--s2);color:var(--tx);font-size:.85rem;font-weight:600;cursor:pointer;margin-bottom:10px;font-family:inherit}
+.aim-btn:hover{border-color:var(--gold);color:var(--gold)}
+.aim-btn.cancel{background:none;border:none;color:var(--sub);font-weight:500;margin-bottom:0;padding:8px}
+.aim-preview{width:100%;max-height:280px;object-fit:contain;border-radius:8px;margin-bottom:14px;background:var(--bg)}
+.aim-confirm-row{display:flex;gap:10px}
+.aim-confirm-row .aim-btn{margin-bottom:0}
+.aim-btn.yes{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.aim-btn.yes:hover{filter:brightness(1.08);color:#1a1a1a}
 </style></head><body>
 <script>var _D=""" + P + """;</script>
 <script>var NI=NI_PLACEHOLDER;</script>
@@ -214,6 +227,31 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <button class="lb-close" onclick="event.stopPropagation();closeLb()" title="Close">&#10005;</button>
   <img id="lbimg" src="" alt="" onclick="event.stopPropagation()">
   <div class="lb-hint">Tap outside image or press Esc to close &middot; pinch to zoom</div>
+</div>
+
+<input type="file" id="aim-camera-input" accept="image/*" capture="environment" style="display:none" onchange="aimHandleFile(this)">
+<input type="file" id="aim-library-input" accept="image/*" style="display:none" onchange="aimHandleFile(this)">
+
+<div class="aim-overlay hid" id="aim-picker" onclick="aimClosePicker()">
+  <div class="aim-box" onclick="event.stopPropagation()">
+    <div class="aim-title">Add a Part Photo</div>
+    <div class="aim-sub" id="aim-picker-desc"></div>
+    <button class="aim-btn" onclick="aimTriggerCamera()">Take Photo</button>
+    <button class="aim-btn" onclick="aimTriggerLibrary()">Choose from Library</button>
+    <button class="aim-btn cancel" onclick="aimClosePicker()">Cancel</button>
+  </div>
+</div>
+
+<div class="aim-overlay hid" id="aim-confirm">
+  <div class="aim-box" onclick="event.stopPropagation()">
+    <div class="aim-title">Is this the correct part?</div>
+    <div class="aim-sub" id="aim-confirm-desc"></div>
+    <img class="aim-preview" id="aim-confirm-img" src="" alt="Preview">
+    <div class="aim-confirm-row">
+      <button class="aim-btn" onclick="aimRetake()">Retake</button>
+      <button class="aim-btn yes" onclick="aimConfirmYes()">Yes, use this</button>
+    </div>
+  </div>
 </div>
 <script>
 window.onerror=function(msg,src,line,col,err){var d=document.createElement('div');d.style='background:#f85149;color:#fff;padding:20px;font-size:14px;font-family:monospace;position:fixed;top:10px;left:10px;right:10px;z-index:99999;white-space:pre-wrap';d.textContent='JS ERR: '+msg+' | line:'+line+' col:'+col;document.body.prepend(d);return true;};
@@ -338,9 +376,9 @@ function rH(p,i){
   var imgSrc=p[IMG]||manualImg;
   var imgBlock;
   if(imgSrc){
-    imgBlock='<div class="ec" style="display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in;position:relative" onclick="openLb(&#39;'+esc(imgSrc).replace(/'/g,"\\'")+'&#39;,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)">'+(manualImg&&!p[IMG]?'<span class="mbadge">Added by you</span>':'')+'<img src="'+esc(imgSrc)+'" alt="" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display=&#39;none&#39;"></div>';
+    imgBlock='<div class="ec" style="display:flex;align-items:center;justify-content:center;padding:6px;cursor:zoom-in;position:relative" onclick="openLb(this.querySelector(&#39;img&#39;).src,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)">'+(manualImg&&!p[IMG]?'<span class="mbadge">Added by you</span>':'')+'<img src="'+esc(imgSrc)+'" alt="" loading="lazy" style="max-width:100%;max-height:110px;object-fit:contain;border-radius:4px" onerror="this.parentElement.style.display=&#39;none&#39;"></div>';
   }else if(p[PN]){
-    imgBlock='<div class="aib" onclick="event.stopPropagation();promptAddImage(&#39;'+esc(p[PN]).replace(/'/g,"\\'")+'&#39;,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)"><span class="plus">+</span>Add Image</div>';
+    imgBlock='<div class="aib" onclick="event.stopPropagation();openAddImagePicker(&#39;'+esc(p[PN]).replace(/'/g,"\\'")+'&#39;,&#39;'+esc(p[DS]).replace(/'/g,"\\'")+'&#39;)"><span class="plus">+</span>Add Image</div>';
   }else{
     imgBlock='';
   }
@@ -462,30 +500,101 @@ function getManualImg(pno){
   return getManualImgStore()[pno.toUpperCase()]||'';
 }
 var ADD_IMAGE_EMAIL='Michael.Leanox@walmart.com';
-function promptAddImage(pno,desc){
+var aimState={pno:'',desc:'',dataUrl:'',blob:null};
+
+function openAddImagePicker(pno,desc){
   if(!pno){alert('This part has no part number on file, so an image cannot be linked to it.');return;}
-  var url=prompt('Paste an image URL for:\n'+(desc||pno)+'\n\nThis saves to your browser instantly AND opens an email to submit it for a permanent site-wide update.');
-  if(!url)return;
-  var trimmed=url.trim();
-  if(!trimmed)return;
+  aimState={pno:pno,desc:desc||'',dataUrl:'',blob:null};
+  ge('aim-picker-desc').textContent=desc||pno;
+  ge('aim-picker').classList.remove('hid');
+}
+function aimClosePicker(){
+  ge('aim-picker').classList.add('hid');
+}
+function aimTriggerCamera(){
+  ge('aim-camera-input').click();
+}
+function aimTriggerLibrary(){
+  ge('aim-library-input').click();
+}
+function aimHandleFile(input){
+  var file=input.files&&input.files[0];
+  input.value='';
+  if(!file)return;
+  aimResizeImage(file,900,0.72,function(dataUrl,blob){
+    aimState.dataUrl=dataUrl;
+    aimState.blob=blob;
+    ge('aim-picker').classList.add('hid');
+    ge('aim-confirm-desc').textContent=aimState.desc||aimState.pno;
+    ge('aim-confirm-img').src=dataUrl;
+    ge('aim-confirm').classList.remove('hid');
+  },function(){
+    alert('Could not read that photo. Please try again.');
+  });
+}
+function aimResizeImage(file,maxDim,quality,onDone,onErr){
+  var img=new Image();
+  var reader=new FileReader();
+  reader.onload=function(e){
+    img.onload=function(){
+      var w=img.width,h=img.height;
+      if(w>maxDim||h>maxDim){
+        if(w>h){h=Math.round(h*maxDim/w);w=maxDim;}
+        else{w=Math.round(w*maxDim/h);h=maxDim;}
+      }
+      var canvas=document.createElement('canvas');
+      canvas.width=w;canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      var dataUrl=canvas.toDataURL('image/jpeg',quality);
+      canvas.toBlob(function(blob){onDone(dataUrl,blob);},'image/jpeg',quality);
+    };
+    img.onerror=onErr;
+    img.src=e.target.result;
+  };
+  reader.onerror=onErr;
+  reader.readAsDataURL(file);
+}
+function aimRetake(){
+  ge('aim-confirm').classList.add('hid');
+  ge('aim-picker').classList.remove('hid');
+}
+function aimConfirmYes(){
+  ge('aim-confirm').classList.add('hid');
   var store=getManualImgStore();
-  store[pno.toUpperCase()]=trimmed;
-  localStorage.setItem(MANUAL_IMG_KEY,JSON.stringify(store));
+  store[aimState.pno.toUpperCase()]=aimState.dataUrl;
+  try{
+    localStorage.setItem(MANUAL_IMG_KEY,JSON.stringify(store));
+  }catch(e){
+    console.warn('localStorage full -- image will still be emailed but will not persist locally',e);
+  }
   af();
-  sendAddImageEmail(pno,desc,trimmed);
+  sendAddImagePhoto(aimState.pno,aimState.desc,aimState.blob);
 }
-function sendAddImageEmail(pno,desc,imgUrl){
+function sendAddImagePhoto(pno,desc,blob){
   var subject='10B Portal - New Part Image: '+(pno||'')+(desc?' - '+desc:'');
-  var body='A new part image was submitted from the 10B Parts Inventory portal.\n\n'
+  var bodyText='A new part photo was submitted from the 10B Parts Inventory portal.\n\n'
     +'Part Number: '+(pno||'(none)')+'\n'
-    +'Description: '+(desc||'(none)')+'\n'
-    +'Image URL: '+imgUrl+'\n\n'
-    +'Please add this to manual_overrides.json so it applies for everyone.';
-  var mailto='mailto:'+ADD_IMAGE_EMAIL
-    +'?subject='+encodeURIComponent(subject)
-    +'&body='+encodeURIComponent(body);
-  window.location.href=mailto;
+    +'Description: '+(desc||'(none)')+'\n\n'
+    +'Photo is attached. Please add it to manual_overrides.json so it applies for everyone.';
+  var fileName='part_'+(pno||'photo').replace(/[^a-z0-9]+/gi,'_')+'.jpg';
+  var file=new File([blob],fileName,{type:blob.type||'image/jpeg'});
+  var sendFallback=function(){
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(file);
+    a.download=fileName;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    var mailto='mailto:'+ADD_IMAGE_EMAIL
+      +'?subject='+encodeURIComponent(subject)
+      +'&body='+encodeURIComponent(bodyText+'\n\n(Your browser downloaded '+fileName+' -- please attach it to this email before sending.)');
+    setTimeout(function(){window.location.href=mailto;},400);
+  };
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    navigator.share({files:[file],title:subject,text:bodyText}).catch(function(){sendFallback();});
+  }else{
+    sendFallback();
+  }
 }
+
 function exportManualImages(){
   var store=getManualImgStore();
   var keys=Object.keys(store);

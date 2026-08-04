@@ -249,7 +249,7 @@ def build_inventory_portal():
             p['area'],p['id'],p['desc'],p['mfr'] or '',p['pno'] or '',
             p['qty'],p['ucost'],p['tcost'],p['area_total'],
             p['rop'],p['maxq'],p['rep'],p['putaway'] or '',p['last_order'] or '',p['goh'],
-            p['fdesc'] or '',
+            p['fdesc'] or '',p['img'] or '',
         ])
 
     compact_techs=[]

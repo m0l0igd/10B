@@ -265,7 +265,7 @@ try{
 var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21;
 var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
-var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:12,a:false},filtered=[],page=0;
+var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:13,a:false},filtered=[],page=0;
 var dark=localStorage.getItem('t10b')!=='light';
 var RM_MGRS={},MGR_RM={};
 R.tech_rows.forEach(function(t){
@@ -315,8 +315,8 @@ function ge(id){return document.getElementById(id);}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';} 
 function togT(){dark=!dark;localStorage.setItem('t10b',dark?'dark':'light');document.body.classList.toggle('light',!dark);}
 
-var COLS=['Part / Item ID','Technician','FS Manager','Sub-Mkt','Role','Location #','Qty','Value','Truck Total','Rep?','Part #'];
-var CSRT=[DS,TI,MI,SI,ROI,AR,QT,TC,AT,RE,PN];
+var COLS=['Part / Item ID','Technician','FS Manager','Sub-Mkt','Role','Location #','Qty','Truck Total','Rep?','Part #'];
+var CSRT=[DS,TI,MI,SI,ROI,AR,QT,AT,RE,PN];
 
 function bH(){
   var h='';
@@ -351,13 +351,15 @@ function af(){
     }
     return true;
   });
-  if(SRT.c!==TC||SRT.a){
-    filtered.sort(function(a,b){
-      var va=a[SRT.c],vb=b[SRT.c];
-      if(typeof va==='number')return SRT.a?va-vb:vb-va;
-      return SRT.a?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));
-    });
-  }
+  // Note: data arrives from BigQuery pre-sorted by tcost DESC (a column
+  // we no longer display/sort-by), so that "skip re-sort when already in
+  // natural order" shortcut no longer applies to any remaining column --
+  // always sort explicitly now.
+  filtered.sort(function(a,b){
+    var va=a[SRT.c],vb=b[SRT.c];
+    if(typeof va==='number')return SRT.a?va-vb:vb-va;
+    return SRT.a?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));
+  });
   page=0;rP();uS();bP();bSB();
 }
 
@@ -386,12 +388,11 @@ function rH(p,i){
   }else{
     imgBlock='';
   }
-  var x='<tr class="xr hid" id="x'+sl+'"><td colspan="11"><div class="xi">'
+  var x='<tr class="xr hid" id="x'+sl+'"><td colspan="10"><div class="xi">'
     +imgBlock
     +'<div class="ec" style="grid-column:1/-1"><div class="el">Full Description</div><div class="ev" style="font-size:.78rem;font-weight:500">'+esc(p[FD]||p[DS]||'—')+'</div></div>'
     +'<div class="ec"><div class="el">Regional Mgr</div><div class="ev" style="font-size:.8rem">'+esc(rm)+'</div><div class="es">Sub: '+esc(sub)+'</div></div>'
     +'<div class="ec"><div class="el">Manufacturer</div><div class="ev" style="font-size:.78rem">'+esc(p[MF])+'</div><div class="es">Part#: '+esc(p[PN])+' - '+role+'</div></div>'
-    +'<div class="ec"><div class="el">Unit Cost</div><div class="ev">'+f$(p[UC])+'</div></div>'
     +'<div class="ec"><div class="el">Reorder Pt</div><div class="ev'+(p[RP]>0?' ok':'')+'">'+fN(p[RP])+'</div><div class="es">Max: '+fN(p[MQ])+'</div></div>'
     +'<div class="ec"><div class="el">Global OH</div><div class="ev">'+fN(p[GO])+'</div></div>'
     +'<div class="ec"><div class="el">Last Putaway</div><div class="ev" style="font-size:.78rem">'+esc(p[PU])+'</div></div>'
@@ -405,8 +406,7 @@ function rH(p,i){
     +'<td><span class="rb '+rc+'">'+role+'</span></td>'
     +'<td style="font-family:monospace;font-size:.75rem;font-weight:600">'+esc(p[AR])+'</td>'
     +'<td style="text-align:right">'+fN(p[QT])+'</td>'
-    +'<td style="text-align:right;font-weight:600">'+f$(p[TC])+'</td>'
-    +'<td style="text-align:right;font-size:.7rem;color:var(--sub)">'+f$(p[AT])+'</td>'
+    +'<td style="text-align:right;font-weight:600">'+f$(p[AT])+'</td>'
     +'<td><span class="'+(p[RE]==='Y'?'ry':'rn')+'">'+(p[RE]==='Y'?'&#10003; Yes':'-')+'</span></td>'
     +'<td style="font-size:.68rem;color:var(--sub);font-family:monospace">'+esc(p[PN])+'</td>'
     +'</tr>'+x;

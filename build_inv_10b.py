@@ -583,6 +583,13 @@ function sendAddImagePhoto(pno,desc,blob){
     +'Photo is attached. Please add it to manual_overrides.json so it applies for everyone.';
   var fileName='part_'+(pno||'photo').replace(/[^a-z0-9]+/gi,'_')+'.jpg';
   var file=new File([blob],fileName,{type:blob.type||'image/jpeg'});
+  // NOTE: navigator.share() used to run first here, but on iPhone it just
+  // pops the generic Share Sheet (Messages/Mail/Outlook/AirDrop/etc) and
+  // makes the user manually pick an app -- it also can NEVER pre-fill a
+  // recipient (a Web Share API limitation on every browser). That looked
+  // like "nothing happened" to users. mailto: is the only thing that
+  // reliably auto-launches the default mail app addressed straight to
+  // ADD_IMAGE_EMAIL with Subject/Body pre-filled, so we go straight there.
   var sendFallback=function(){
     var a=document.createElement('a');
     a.href=URL.createObjectURL(file);
@@ -593,11 +600,7 @@ function sendAddImagePhoto(pno,desc,blob){
       +'&body='+encodeURIComponent(bodyText+'\n\n(Your browser downloaded '+fileName+' -- please attach it to this email before sending.)');
     setTimeout(function(){window.location.href=mailto;},400);
   };
-  if(navigator.canShare&&navigator.canShare({files:[file]})){
-    navigator.share({files:[file],title:subject,text:bodyText}).catch(function(){sendFallback();});
-  }else{
-    sendFallback();
-  }
+  sendFallback();
 }
 
 function cS(i){var c=CSRT[i];if(SRT.c===c)SRT.a=!SRT.a;else{SRT.c=c;SRT.a=[DS,TI,MI,AR,PN,SI].indexOf(c)>=0;}bH();af();}

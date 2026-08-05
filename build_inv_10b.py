@@ -72,8 +72,6 @@ nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:
 #srch::placeholder{color:rgba(255,255,255,.65)}
 #srch:focus{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.7)}
 .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.7);pointer-events:none}
-.hm{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 11px;font-size:.85rem;color:#fff;text-decoration:none;white-space:nowrap;flex-shrink:0}
-.hm:hover{background:rgba(255,255,255,.3)}
 .btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 12px;font-size:.72rem;color:#fff;cursor:pointer;font-family:inherit}
 .btn:hover{background:rgba(255,255,255,.28)}
 .hbar{background:var(--wmt2);border-bottom:2px solid rgba(255,255,255,.15);padding:8px 20px;display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
@@ -171,7 +169,6 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 <script>var _D=""" + P + """;</script>
 <script>var NI=NI_PLACEHOLDER;</script>
 <nav>
-  <a class="hm" href="index.html">&#127968; Home</a>
   <div class="nt"><img class="nt-logo" src="upstream_logo.png" alt="Upstream Facility Services"><div class="nt-text"><span>Region 10B</span><span class="nt-sub">Global Search</span></div></div>
   <span class="nb" id="tb">-</span>
   <div class="sw"><span class="si">&#128269;</span>

@@ -1,4 +1,3 @@
 {
-  "_comment": "Manually-submitted part images, merged into every build with priority over ZEUS-scraped images. Populated by folding in JSON files exported from the site's 'Export My Added Images' button. Format: { \"PART-NUMBER\": \"https://image-url\", ... }",
-  "080Z0017": "https://m0l0igd.github.io/10B/manual_images/080Z0017.jpg"
+  "_comment": "Manually-submitted part images, merged into every build with priority over ZEUS-scraped images. Populated by folding in JSON files exported from the site's 'Export My Added Images' button. Format: { \"PART-NUMBER\": \"https://image-url\", ... }"
 }

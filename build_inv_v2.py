@@ -248,6 +248,7 @@ function toggleTheme(){dark=!dark;localStorage.setItem('inv-theme',dark?'dark':'
 
 // ── COLUMNS ────────────────────────────────────────────────────────────────
 const COLS=[
+  {k:'pno',   l:'Part #',         w:'120px'},
   {k:'desc',  l:'Part / Item ID',  w:'auto'},
   {k:'tech',  l:'Technician',      w:'160px'},
   {k:'role',  l:'Role',            w:'80px'},
@@ -255,7 +256,6 @@ const COLS=[
   {k:'qty',   l:'Qty',             w:'60px', align:'right'},
   {k:'area_total',l:'Truck Total', w:'100px',align:'right'},
   {k:'rep',   l:'Rep?',            w:'70px'},
-  {k:'pno',   l:'Part #',         w:'120px'},
 ];
 
 function buildHeader(){
@@ -300,14 +300,14 @@ function buildRows(){
         data-img="${imgSrc?'1':'0'}"
         data-tech="${p.tech}"
         onclick="togExp('${sl}')">
+      <td style="font-size:.78rem;font-weight:700;color:#58a6ff;font-family:monospace">${p.pno||'—'}</td>
       <td><div class="c-desc">${p.desc}</div>${(p.fdesc&&p.fdesc!==p.desc)?`<div class="c-fdesc">${p.fdesc}</div>`:''}<div class="c-id">${p.id}</div></td>
       <td class="c-tech">${p.tech==='Store Inventory'?'<em style="color:var(--sub)">Store Inventory</em>':p.tech}</td>
       <td><span class="rb ${ROLE_CLS[p.role]||'rb-st'}">${p.role}</span></td>
       <td class="c-area">${p.area}</td>
       <td style="text-align:right">${fmtN(p.qty)}</td>
       <td style="text-align:right;font-weight:600">${fmt$(p.area_total)}</td>
-      <td><span class="${rep?'rep-y':'rep-n'}">${rep?'✓ Yes':'—'}</span></td>
-      <td style="font-size:.68rem;color:var(--sub);font-family:monospace">${p.pno||'—'}</td>
+      <td><span class="${rep?'rep-y':'rep-n'}">${rep?'&#10003; Yes':'—'}</span></td>
     </tr>${det}`;
   }).join('');
 }

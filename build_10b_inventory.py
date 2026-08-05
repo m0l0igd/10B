@@ -331,7 +331,8 @@ def build_inventory_portal():
 
         # Render Manager Specific HTML
         html = tmpl
-        html = html.replace('📦 367-A Parts Inventory',       f'📦 {sub} Parts Inventory')
+        html = html.replace('<title>367-A - Region 10B Parts Inventory</title>', f'<title>{sub} - Region 10B Parts Inventory</title>')
+        html = html.replace('<span class="nav-title-sub">367-A</span>', f'<span class="nav-title-sub">{sub}</span>')
         html = html.replace('Parts Inventory — 367-A',        f'Parts Inventory — {sub}')
         html = html.replace('Michael Leanox · Manager 367-A', f'{mgr_name} · Manager {sub}')
         html = html.replace('Manager: M0L0IGD',               f'Sub-Market: {sub} · RM: {rm_name}')
@@ -402,7 +403,7 @@ window.onerror = function(message, source, lineno, colno, error) {{
 }};
 </script>
 
-<div class="nt" style="font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px">📦 Region 10B Parts Inventory</div>
+<div class="nt" style="display:flex;align-items:center;gap:14px;margin-bottom:6px"><img src="upstream_logo.png" alt="Upstream Facility Services" style="height:44px;width:auto;display:block"><span style="font-size:1.4rem;font-weight:800;color:#e9bf3f">Region 10B</span></div>
 <div class="sub" style="font-size:.82rem;color:#8b949e;margin-bottom:20px">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
 
 <!-- Prominent Global Search Button using Walmart Colors with cache-busting! -->

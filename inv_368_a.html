@@ -134,7 +134,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
     <button class="srch-clr" onclick="clearSearch()" title="Clear search">✕</button>
   </div>
   <div class="nav-r">
-    <a href="index.html?v=1785968912" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><a href="10b-inventory.html?v=1785968912" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a><button class="nbtn" onclick="copyLink(this)">🔗 Share</button>
+    <a href="index.html?v=1785969917" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><a href="10b-inventory.html?v=1785969917" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a><button class="nbtn" onclick="copyLink(this)">🔗 Share</button>
     <button class="nbtn" onclick="toggleTheme()">☀️/🌙</button>
   </div>
 </nav>
@@ -230,7 +230,7 @@ const D={"parts":[{"sub":"368-A","rm":"Christopher Fuentes","mgr":"Thomas Balaci
 
 // ── state ──────────────────────────────────────────────────────────────────
 let filters={role:'',rep:'',tech:'',img:false,noimg:false};
-let sortS={c:'tcost',a:false};
+let sortS={c:'area_total',a:false};
 let dark = localStorage.getItem('inv-theme')!=='light';
 
 const ROLE_CLS={GM:'rb-gm',HVACR:'rb-hv',FE:'rb-fe',Store:'rb-st'};
@@ -249,7 +249,6 @@ const COLS=[
   {k:'role',  l:'Role',            w:'80px'},
   {k:'area',  l:'Location #',      w:'90px'},
   {k:'qty',   l:'Qty',             w:'60px', align:'right'},
-  {k:'tcost', l:'Value',           w:'90px', align:'right'},
   {k:'area_total',l:'Truck Total', w:'100px',align:'right'},
   {k:'rep',   l:'Rep?',            w:'70px'},
   {k:'pno',   l:'Part #',         w:'120px'},
@@ -283,7 +282,6 @@ function buildRows(){
         ${imgHtml}
         <div class="ec"><div class="ec-l">Full Description</div><div class="ec-v" style="font-size:.75rem;font-weight:500">${p.fdesc||p.desc||'—'}</div></div>
         <div class="ec"><div class="ec-l">Manufacturer</div><div class="ec-v" style="font-size:.8rem">${p.mfr||'—'}</div><div class="ec-s">Part #: ${p.pno||'—'} · UOM: ${p.uom}</div></div>
-        <div class="ec"><div class="ec-l">Unit Cost</div><div class="ec-v">${fmt$(p.ucost)}</div></div>
         <div class="ec"><div class="ec-l">Reorder Point</div><div class="ec-v ${p.rop>0?'ok':''}">${fmtN(p.rop)}</div><div class="ec-s">Max Qty: ${fmtN(p.maxq)}</div></div>
         <div class="ec"><div class="ec-l">Global On-Hand</div><div class="ec-v">${fmtN(p.goh)}</div></div>
         <div class="ec"><div class="ec-l">Last Putaway</div><div class="ec-v" style="font-size:.78rem">${p.putaway||'—'}</div></div>
@@ -303,8 +301,7 @@ function buildRows(){
       <td><span class="rb ${ROLE_CLS[p.role]||'rb-st'}">${p.role}</span></td>
       <td class="c-area">${p.area}</td>
       <td style="text-align:right">${fmtN(p.qty)}</td>
-      <td style="text-align:right;font-weight:600">${fmt$(p.tcost)}</td>
-      <td style="text-align:right;font-size:.7rem;color:var(--sub)">${fmt$(p.area_total)}</td>
+      <td style="text-align:right;font-weight:600">${fmt$(p.area_total)}</td>
       <td><span class="${rep?'rep-y':'rep-n'}">${rep?'✓ Yes':'—'}</span></td>
       <td style="font-size:.68rem;color:var(--sub);font-family:monospace">${p.pno||'—'}</td>
     </tr>${det}`;

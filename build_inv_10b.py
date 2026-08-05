@@ -315,8 +315,8 @@ function ge(id){return document.getElementById(id);}
 function esc(s){return s?String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'):'';} 
 function togT(){dark=!dark;localStorage.setItem('t10b',dark?'dark':'light');document.body.classList.toggle('light',!dark);}
 
-var COLS=['Part / Item ID','Technician','FS Manager','Sub-Mkt','Role','Location #','Qty','Truck Total','Rep?','Part #'];
-var CSRT=[DS,TI,MI,SI,ROI,AR,QT,AT,RE,PN];
+var COLS=['Part #','Part / Item ID','Technician','FS Manager','Sub-Mkt','Role','Location #','Qty','Truck Total','Rep?'];
+var CSRT=[PN,DS,TI,MI,SI,ROI,AR,QT,AT,RE];
 
 function bH(){
   var h='';
@@ -399,7 +399,7 @@ function rH(p,i){
     +'<div class="ec"><div class="el">Last Order</div><div class="ev" style="font-size:.78rem">'+esc(p[LO])+'</div></div>'
     +'</div></td></tr>';
   var fdSub=(p[FD]&&p[FD]!==p[DS])?'<div style="font-size:.66rem;color:var(--sub);line-height:1.25;margin-top:1px;max-width:260px">'+esc(p[FD])+'</div>':'';
-  return '<tr onclick="tX(&#39;'+sl+'&#39;)"><td><div style="font-weight:600;line-height:1.3;max-width:260px">'+esc(p[DS])+'</div>'+fdSub+'<div style="font-size:.63rem;color:var(--sub);font-family:monospace;margin-top:1px">'+esc(p[ID])+'</div></td>'
+  return '<tr onclick="tX(&#39;'+sl+'&#39;)"><td style="font-size:.85rem;font-weight:700;color:#58a6ff;font-family:monospace">'+esc(p[PN])+'</td><td><div style="font-weight:600;line-height:1.3;max-width:260px">'+esc(p[DS])+'</div>'+fdSub+'<div style="font-size:.63rem;color:var(--sub);font-family:monospace;margin-top:1px">'+esc(p[ID])+'</div></td>'
     +'<td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">'+td+'</td>'
     +'<td style="font-size:.7rem;color:var(--sub)">'+esc(mgr)+'</td>'
     +'<td><span class="sbg">'+esc(sub)+'</span></td>'
@@ -408,7 +408,6 @@ function rH(p,i){
     +'<td style="text-align:right">'+fN(p[QT])+'</td>'
     +'<td style="text-align:right;font-weight:600">'+f$(p[AT])+'</td>'
     +'<td><span class="'+(p[RE]==='Y'?'ry':'rn')+'">'+(p[RE]==='Y'?'&#10003; Yes':'-')+'</span></td>'
-    +'<td style="font-size:.68rem;color:var(--sub);font-family:monospace">'+esc(p[PN])+'</td>'
     +'</tr>'+x;
 }
 

@@ -404,7 +404,7 @@ window.onerror = function(message, source, lineno, colno, error) {{
 </script>
 
 <div class="nt" style="display:flex;align-items:center;gap:14px;margin-bottom:6px"><img src="upstream_logo.png" alt="Upstream Facility Services" style="height:44px;width:auto;display:block"><span style="font-size:1.4rem;font-weight:800;color:#e9bf3f">Region 10B</span></div>
-<div class="sub" style="font-size:.82rem;color:#8b949e;margin-bottom:20px">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
+<div class="sub" style="font-size:.78rem;font-weight:600;color:#ffc220;letter-spacing:.03em;border-top:2px solid #e9bf3f;padding-top:6px;margin-bottom:20px;display:inline-block">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
 
 <!-- Prominent Global Search Button using Walmart Colors with cache-busting! -->
 <div style="margin-bottom: 25px;">
@@ -465,10 +465,12 @@ window.onerror = function(message, source, lineno, colno, error) {{
     # Embed payload directly
     global_html = global_html.replace('""" + P + """', json.dumps(compact_payload, separators=(',',':')))
     
-    # Inject navigation link back to hub with cache busting!
+    # Inject navigation link back to hub with cache busting! (user prefers
+    # calling this "Home" rather than "Hub" -- this replaces the old
+    # separate built-in Home button that used to live on the far left)
     global_html = global_html.replace(
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>',
-        f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
+        f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none;margin-right:6px">&#127968; Home</a>'
         '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>'
     )
     

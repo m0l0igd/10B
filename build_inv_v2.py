@@ -5,7 +5,7 @@ P = open(r'C:\Users\Public\inv_payload.json', encoding='utf-8').read()
 HTML = r"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>367-A Parts Inventory</title>
+<title>367-A - Region 10B Parts Inventory</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#0d1117;--s1:#161b22;--s2:#21262d;--bd:#30363d;--tx:#e6edf3;--sub:#8b949e;--blue:#58a6ff;--grn:#3fb950;--red:#f85149;--amb:#d29922;--pur:#bc8cff;--wmt:#0071ce;--gold:#ffc220}
@@ -13,7 +13,11 @@ body.light{--bg:#f6f8fa;--s1:#fff;--s2:#f6f8fa;--bd:#d0d7de;--tx:#1f2328;--sub:#
 body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;min-height:100vh}
 /* NAV */
 nav{background:var(--wmt);padding:10px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.nav-title{font-weight:700;font-size:1rem;color:#fff;white-space:nowrap}
+.nav-title{font-weight:700;font-size:1rem;color:#fff;white-space:nowrap;display:flex;align-items:center;gap:10px}
+.nav-logo{height:28px;width:auto;display:block}
+.nav-title-text{display:flex;flex-direction:column;line-height:1.15}
+.nav-title-main{color:#fff}
+.nav-title-sub{font-size:.62rem;font-weight:600;color:#ffc220;letter-spacing:.03em;border-top:2px solid #e9bf3f;padding-top:2px;margin-top:1px}
 .nav-badge{background:rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:2px 9px;font-size:.7rem;white-space:nowrap}
 /* KEY FIX: search is a persistent input — never destroyed/recreated */
 .srch-wrap{flex:1;min-width:200px;max-width:460px;position:relative}
@@ -130,7 +134,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 <body>
 <!-- PERSISTENT SEARCH — lives in nav, never destroyed -->
 <nav>
-  <div class="nav-title">📦 367-A Parts Inventory</div>
+  <div class="nav-title"><img class="nav-logo" src="upstream_logo.png" alt="Upstream Facility Services"><div class="nav-title-text"><span class="nav-title-main">Region 10B</span><span class="nav-title-sub">367-A</span></div></div>
   <span class="nav-badge" id="total-badge"></span>
   <div class="srch-wrap">
     <span class="srch-ico">🔍</span>

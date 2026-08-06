@@ -235,7 +235,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   </div>
 </div>
 <footer>
-  <span>Region 10B - 15 Sub-Markets - re-ods-prod.semantic_fs_zeus_parts_inventory</span>
+  <span>Region 10B - 15 Sub-Markets</span>
   <span id="rts"></span>
 </footer>
 <div class="lb-overlay hid" id="lbov" onclick="closeLb()">

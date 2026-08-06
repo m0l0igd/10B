@@ -404,7 +404,9 @@ h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .cards{{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}}
 .card{{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px 16px;text-decoration:none;display:block;transition:.12s}}
 .card:hover{{border-color:#58a6ff;background:#1c2432}}
-.ct{{font-size:.9rem;font-weight:700;color:#58a6ff;margin-bottom:3px}}
+@keyframes wave10bSweep{{0%{{background-position:100% 0}}100%{{background-position:0% 0}}}}
+.ct{{font-size:.9rem;font-weight:700;margin-bottom:3px;color:#58a6ff;background:linear-gradient(100deg,#ffc220 0%,#ffc220 38%,#58a6ff 52%,#ffc220 66%,#ffc220 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:wave10bSweep 3.2s linear infinite;display:inline-block}}
+@supports not (background-clip:text){{.ct{{background:none;color:#58a6ff}}}}
 .cs{{font-size:.7rem;color:#8b949e;margin-bottom:8px}}
 .cd{{display:flex;gap:14px}}
 .sv{{text-align:center}}.sv-v{{font-size:1.1rem;font-weight:800;color:#e6edf3}}.sv-l{{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}}
@@ -426,18 +428,17 @@ window.onerror = function(message, source, lineno, colno, error) {{
 
 <div class="nt" style="display:flex;align-items:center;gap:14px;margin-bottom:6px"><img src="upstream_logo.png" alt="Upstream Facility Services" style="height:44px;width:auto;display:block"><span style="font-size:1.4rem;font-weight:800;color:#e9bf3f">Region 10B</span></div>
 
-<!-- Prominent Global Search Button -- gold base with a continuous animated
-     blue wave cascading across it (always moving, not just on hover) -->
+<!-- Prominent Global Search Button -- red/white/blue cascading wave,
+     mirrors the same animated-gradient trick used on manager names above -->
 <style>
-@keyframes wave10bSweep{{0%{{background-position:100% 0}}100%{{background-position:0% 0}}}}
 .wave10b-btn{{
   display:inline-flex;align-items:center;gap:8px;
-  background:linear-gradient(100deg,#ffc220 0%,#ffc220 38%,#0053e2 52%,#ffc220 66%,#ffc220 100%);
+  background:linear-gradient(100deg,#e21836 0%,#e21836 30%,#fff 48%,#0053e2 66%,#0053e2 100%);
   background-size:260% 100%;
   animation:wave10bSweep 3.2s linear infinite;
   color:#fff;font-weight:800;font-size:.98rem;
   padding:13px 22px;border-radius:10px;text-decoration:none;
-  text-shadow:0 1px 3px rgba(0,0,0,.55);
+  text-shadow:0 1px 3px rgba(0,0,0,.65);
   box-shadow:0 3px 12px rgba(0,0,0,.35);
 }}
 .wave10b-btn:hover{{animation-duration:1.4s;box-shadow:0 4px 16px rgba(0,0,0,.5)}}

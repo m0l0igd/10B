@@ -28,8 +28,9 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .srch-clr{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:.9rem;padding:0;line-height:1;display:none}
 #srch:not(:placeholder-shown)~.srch-clr{display:block}
 .nav-r{margin-left:auto;display:flex;gap:6px}
-.nbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 12px;font-size:.72rem;color:#fff;cursor:pointer;white-space:nowrap;font-family:inherit}
+.nbtn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:6px 12px;font-size:.72rem;color:#fff;cursor:pointer;white-space:nowrap;font-family:inherit;display:inline-flex;align-items:center;gap:6px}
 .nbtn:hover{background:rgba(255,255,255,.28)}
+.nbtn svg{display:block;flex-shrink:0}
 /* FILTER BAR */
 .fbar{background:var(--s1);border-bottom:1px solid var(--bd);padding:7px 20px;display:flex;align-items:center;gap:7px;flex-wrap:wrap;position:sticky;top:53px;z-index:100}
 .fl{font-size:.67rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
@@ -150,8 +151,8 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
     <button class="srch-clr" onclick="clearSearch()" title="Clear search">✕</button>
   </div>
   <div class="nav-r">
-    <button class="nbtn" onclick="copyLink(this)">🔗 Share</button>
-    <button class="nbtn" onclick="toggleTheme()">☀️/🌙</button>
+    <button class="nbtn" onclick="copyLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
+    <button class="nbtn" onclick="toggleTheme()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
   </div>
 </nav>
 

@@ -442,18 +442,18 @@ function uS(){
 
 function bP(){
   var vm=F.rm?(RM_MGRS[F.rm]||[]).slice().sort():ALL_MGRS;
-  var rh='<option value="">All</option>';
+  var rh='<option value="">RGM</option>';
   ALL_RMS.forEach(function(r){rh+='<option value="'+esc(r)+'"'+(F.rm===r?' selected':'')+'>'+esc(r)+'</option>';});
   ge('rmSel').innerHTML=rh;
   ge('rmSel').value=F.rm||'';
 
-  var mh='<option value="">All</option>';
+  var mh='<option value="">FSM</option>';
   vm.forEach(function(m){mh+='<option value="'+esc(m)+'"'+(F.mgr===m?' selected':'')+'>'+esc(m)+'</option>';});
   ge('mgrSel').innerHTML=mh;
   ge('mgrSel').value=F.mgr||'';
 
   var vt=F.mgr?(MGR_TECHS[F.mgr]||[]).slice().sort():vm.reduce(function(acc,m){return acc.concat(MGR_TECHS[m]||[]);},[]).sort();
-  var th='<option value="">All Techs</option>';
+  var th='<option value="">TECH</option>';
   vt.forEach(function(t){th+='<option value="'+esc(t)+'"'+(F.tech===t?' selected':'')+'>'+esc(t)+'</option>';});
   ge('techSel').innerHTML=th;
   ge('techSel').value=F.tech||'';

@@ -216,11 +216,13 @@ def build_inventory_portal():
             sub = correct_sub
             h = HIER[sub]
 
-        raw_rm = r.fs_rm
-        if raw_rm and raw_rm != 'NULL' and 'UNKNOWN' not in raw_rm.upper():
-            rm = raw_rm.title()
-        else:
-            rm = h['reg_mgr']
+        # Regional Manager has the SAME data-quality problem as sub-market:
+        # raw fs_regional_manager_name is inconsistent row-to-row for the
+        # same manager (e.g. Joshua Drezek's rows split between Israel Pino
+        # and Ralph Vasquez; Gustavo Ortiz's rows scatter across all 4 RMs).
+        # Once we trust `mgr`/`h` above, always take RM from HIER too --
+        # never from the raw per-row value.
+        rm = h['reg_mgr']
 
         tech = r.tech or 'STORE LOCATION'
         # Exclude generic placeholder technicians

@@ -437,7 +437,7 @@ function uS(){
   ge('sc2').textContent=Object.keys(ts).length;ge('sm').textContent=Object.keys(ms).length;
   ge('sl2').textContent=Object.keys(ls).length;ge('srp').textContent=rc;
   ge('fc').textContent=vis<R.parts.length?vis.toLocaleString()+' of '+R.parts.length.toLocaleString()+' shown':'';
-  ge('tsl').textContent=(F.mgr?F.mgr:F.rm?F.rm:'All 15 Sub-Markets')+' - semantic_fs_zeus_parts_inventory';
+  ge('tsl').textContent=(F.mgr?F.mgr:F.rm?F.rm:'All 15 Sub-Markets');
 }
 
 function bP(){

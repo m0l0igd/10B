@@ -105,9 +105,15 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .sl{font-size:.6rem;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
 .wr{max-width:1600px;margin:12px auto 0;padding:0 20px 30px;display:flex;gap:16px}
 .sb{width:228px;flex-shrink:0;position:sticky;top:120px;max-height:calc(100vh - 130px);overflow-y:auto}
-@media(max-width:960px){.sb{display:none}.wr{padding:0 12px 20px}}
+@media(max-width:960px){.wr{padding:0 12px 20px}}
+@media(max-width:960px) and (orientation:portrait){.sb{display:none}}
 .mn{flex:1;min-width:0}
 .sg{font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 5px;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.sb-toggle-hd{display:flex;align-items:center;justify-content:space-between;font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 5px;border-bottom:1px solid var(--bd);margin-bottom:6px;cursor:pointer;user-select:none}
+.sb-toggle-hd:hover{color:var(--tx)}
+.sb-arrow{font-size:.7rem;transition:transform .15s}
+.sb-arrow.collapsed{transform:rotate(-90deg)}
+.sb-body.collapsed{display:none}
 .sgl{font-size:.65rem;font-weight:700;color:var(--sub);padding:3px 6px;background:var(--s2);border-radius:4px;margin:6px 0 3px}
 .sr{display:flex;align-items:center;gap:7px;padding:4px 6px;border-radius:6px;cursor:pointer}
 .sr:hover{background:var(--s2)}.sr.on{background:var(--s2);box-shadow:inset 2px 0 0 var(--blue)}
@@ -210,7 +216,13 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <div class="sc"><div class="sv" id="srp">-</div><div class="sl">Replenishable</div></div>
 </div>
 <div class="wr">
-  <div class="sb" id="sb"></div>
+  <div class="sb" id="sb">
+    <div class="sb-toggle-hd" onclick="toggleSB()">
+      <span>Technicians</span>
+      <span class="sb-arrow" id="sb-arrow">&#9662;</span>
+    </div>
+    <div class="sb-body" id="sb-body"></div>
+  </div>
   <div class="mn">
     <div class="tbox">
       <div class="th">
@@ -445,7 +457,7 @@ function bSB(){
     if(!bm[mgr])bm[mgr]=[];
     bm[mgr].push({tech:TECHSV[t[0]],mgr:mgr,rm:rm,role:ROLESV[t[3]],area:t[4],items:t[5],value:t[6]});
   });
-  var h='<div class="sg">Technicians</div>';
+  var h='';
   Object.keys(bm).sort().forEach(function(mgr){
     var tl=bm[mgr].sort(function(a,b){return b.value-a.value;});
     h+='<div class="sgl">'+esc(mgr)+'</div>';
@@ -480,7 +492,14 @@ function bSB(){
       });
     });
   }
-  ge('sb').innerHTML=h;
+  ge('sb-body').innerHTML=h;
+}
+
+function toggleSB(){
+  var body=ge('sb-body'),arrow=ge('sb-arrow');
+  var collapsed=body.classList.toggle('collapsed');
+  arrow.classList.toggle('collapsed',collapsed);
+  localStorage.setItem('sb-collapsed',collapsed?'1':'0');
 }
 
 
@@ -616,6 +635,10 @@ if(_ERR){
     ge('tb').textContent=R.parts.length.toLocaleString()+' items';
     ge('rts').textContent='Data as of BUILT_TS';
     bH();af();
+    if(localStorage.getItem('sb-collapsed')==='1'){
+      ge('sb-body').classList.add('collapsed');
+      ge('sb-arrow').classList.add('collapsed');
+    }
     ge('srch').addEventListener('input',af);
   }catch(err){
     var eb2=document.createElement('div');

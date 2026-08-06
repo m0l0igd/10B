@@ -25,9 +25,12 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .hl{font-size:.6rem;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em}
 .hps{display:flex;gap:5px;flex-wrap:wrap}
 .hp{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:3px 11px;font-size:.7rem;color:rgba(255,255,255,.85);cursor:pointer;white-space:nowrap;font-family:inherit}
+.hsel{background:var(--wmt);border:1.5px solid var(--gold);border-radius:20px;padding:5px 30px 5px 14px;font-size:.75rem;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffc220' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:14px;min-width:160px}
+.hsel:hover{border-color:#fff}
+.hsel:focus{outline:none;border-color:#fff;box-shadow:0 0 0 2px rgba(255,194,32,.35)}
+.hsel option{background:var(--wmt2);color:#fff}
 .hp:hover{background:rgba(255,255,255,.22)}.hp.on{background:#fff;color:var(--wmt);font-weight:700}
 .hp.hid{display:none}
-.sep{width:1px;background:rgba(255,255,255,.2);align-self:stretch}
 .fb{background:var(--s1);border-bottom:1px solid var(--bd);padding:7px 20px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .fl{font-size:.67rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 .pl{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 11px;font-size:.7rem;color:var(--sub);cursor:pointer;white-space:nowrap;font-family:inherit}
@@ -140,14 +143,14 @@ window.onerror = function(message, source, lineno, colno, error) {
     <input id="srch" type="text" placeholder="Search part, tech, role, manager, location, mfr, date&#8230;" autocomplete="off">
   </div>
   <div class="nr2">
-    <a href="index.html?v=1785985395" class="btn" style="text-decoration:none;margin-right:6px">&#127968; Home</a><button class="btn" onclick="cpLink(this)">&#128279; Share</button>
+    <a href="index.html?v=1785985929" class="btn" style="text-decoration:none;margin-right:6px">&#127968; Home</a><button class="btn" onclick="cpLink(this)">&#128279; Share</button>
     <button class="btn" onclick="togT()">&#9728;/&#127769;</button>
   </div>
 </nav>
 <div class="hbar">
-  <div class="hc"><div class="hl">Regional Manager</div><div class="hps" id="rmp"></div></div>
-  <div class="sep"></div>
-  <div class="hc"><div class="hl">FS Manager</div><div class="hps" id="mgp"></div></div>
+  <div class="hc"><div class="hl">Regional Manager</div><select class="hsel" id="rmSel" onchange="sRM(this.value)"></select></div>
+  <div class="hc"><div class="hl">FS Manager</div><select class="hsel" id="mgrSel" onchange="sMGR(this.value)"></select></div>
+  <div class="hc"><div class="hl">Technician</div><select class="hsel" id="techSel" onchange="sTechSel(this.value)"></select></div>
 </div>
 <div class="fb">
   <span class="fl">Role:</span>
@@ -240,12 +243,14 @@ var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
 var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:13,a:false},filtered=[],page=0;
 var dark=localStorage.getItem('t10b')!=='light';
-var RM_MGRS={},MGR_RM={};
+var RM_MGRS={},MGR_RM={},MGR_TECHS={};
 R.tech_rows.forEach(function(t){
-  var rm=RMSV[t[2]],mgr=MGRSV[t[1]];
+  var rm=RMSV[t[2]],mgr=MGRSV[t[1]],tech=TECHSV[t[0]];
   if(!RM_MGRS[rm])RM_MGRS[rm]=[];
   if(RM_MGRS[rm].indexOf(mgr)<0)RM_MGRS[rm].push(mgr);
   MGR_RM[mgr]=rm;
+  if(!MGR_TECHS[mgr])MGR_TECHS[mgr]=[];
+  if(MGR_TECHS[mgr].indexOf(tech)<0)MGR_TECHS[mgr].push(tech);
 });
 var ALL_RMS=Object.keys(RM_MGRS).sort(),ALL_MGRS=Object.keys(MGR_RM).sort();
 var LOW_ITEM_THRESHOLD=25;
@@ -400,13 +405,31 @@ function uS(){
 }
 
 function bP(){
-  var vm=F.rm?(RM_MGRS[F.rm]||[]):ALL_MGRS;
-  var rh='<button class="hp '+(F.rm?'':'on')+'" onclick="sRM(&#39;&#39;)">All</button>';
-  ALL_RMS.forEach(function(r){rh+='<button class="hp '+(F.rm===r?'on':'')+'" onclick="sRM(&#39;'+esc(r)+'&#39;)">'+esc(r)+'</button>';});
-  ge('rmp').innerHTML=rh;
-  var mh='<button class="hp '+(F.mgr?'':'on')+'" onclick="sMGR(&#39;&#39;)">All</button>';
-  ALL_MGRS.forEach(function(m){mh+='<button class="hp'+(F.mgr===m?' on':'')+(vm.indexOf(m)<0?' hid':'')+'" onclick="sMGR(&#39;'+esc(m)+'&#39;)">'+esc(m)+'</button>';});
-  ge('mgp').innerHTML=mh;
+  var vm=F.rm?(RM_MGRS[F.rm]||[]).slice().sort():ALL_MGRS;
+  var rh='<option value="">All</option>';
+  ALL_RMS.forEach(function(r){rh+='<option value="'+esc(r)+'"'+(F.rm===r?' selected':'')+'>'+esc(r)+'</option>';});
+  ge('rmSel').innerHTML=rh;
+  ge('rmSel').value=F.rm||'';
+
+  var mh='<option value="">All</option>';
+  vm.forEach(function(m){mh+='<option value="'+esc(m)+'"'+(F.mgr===m?' selected':'')+'>'+esc(m)+'</option>';});
+  ge('mgrSel').innerHTML=mh;
+  ge('mgrSel').value=F.mgr||'';
+
+  var vt=F.mgr?(MGR_TECHS[F.mgr]||[]).slice().sort():vm.reduce(function(acc,m){return acc.concat(MGR_TECHS[m]||[]);},[]).sort();
+  var th='<option value="">All Techs</option>';
+  vt.forEach(function(t){th+='<option value="'+esc(t)+'"'+(F.tech===t?' selected':'')+'>'+esc(t)+'</option>';});
+  ge('techSel').innerHTML=th;
+  ge('techSel').value=F.tech||'';
+}
+
+function sTechSel(t){
+  if(!t){F.tech='';af();return;}
+  var mgr=null;
+  Object.keys(MGR_TECHS).forEach(function(m){if(MGR_TECHS[m].indexOf(t)>=0)mgr=m;});
+  F.tech=t;
+  if(mgr){F.mgr=mgr;F.rm=MGR_RM[mgr]||F.rm;}
+  af();
 }
 
 function bSB(){
@@ -596,7 +619,7 @@ if(_ERR){
 }else{
   try{
     ge('tb').textContent=R.parts.length.toLocaleString()+' items';
-    ge('rts').textContent='Data as of Aug 05, 2026 08:03 PM';
+    ge('rts').textContent='Data as of Aug 05, 2026 08:12 PM';
     bH();af();
     if(localStorage.getItem('sb-collapsed')==='1'){
       ge('sb').classList.add('collapsed');

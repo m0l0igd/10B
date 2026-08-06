@@ -146,7 +146,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
     <button class="srch-clr" onclick="clearSearch()" title="Clear search">✕</button>
   </div>
   <div class="nav-r">
-    <a href="index.html?v=1785985929" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><a href="10b-inventory.html?v=1785985929" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a><button class="nbtn" onclick="copyLink(this)">🔗 Share</button>
+    <a href="index.html?v=1785986436" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><a href="10b-inventory.html?v=1785986436" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a><button class="nbtn" onclick="copyLink(this)">🔗 Share</button>
     <button class="nbtn" onclick="toggleTheme()">☀️/🌙</button>
   </div>
 </nav>
@@ -318,7 +318,7 @@ function buildRows(){
         onclick="togExp('${sl}')">
       <td style="font-size:.78rem;font-weight:700;color:#58a6ff;font-family:monospace">${p.pno||'—'}</td>
       <td><div class="c-desc">${p.desc}</div>${(p.fdesc&&p.fdesc!==p.desc)?`<div class="c-fdesc">${p.fdesc}</div>`:''}<div class="c-id">${p.id}</div></td>
-      <td class="c-tech">${p.tech==='Store Inventory'?'<em style="color:var(--sub)">Store Inventory</em>':p.tech}</td>
+      <td class="c-tech">${p.tech.indexOf('WM#')===0?'<em style="color:var(--sub)">'+p.tech+'</em>':p.tech}</td>
       <td><span class="rb ${ROLE_CLS[p.role]||'rb-st'}">${p.role}</span></td>
       <td class="c-area">${p.area}</td>
       <td style="text-align:right">${fmtN(p.qty)}</td>

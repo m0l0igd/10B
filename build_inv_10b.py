@@ -67,7 +67,6 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .nt-logo{height:44px;width:auto;display:block}
 .nt-text{display:flex;flex-direction:column;line-height:1.15}
 .nt-sub{font-size:.62rem;font-weight:600;color:#ffc220;letter-spacing:.03em;border-top:2px solid #e9bf3f;padding-top:2px;margin-top:1px}
-.nb{background:rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:2px 9px;font-size:.7rem}
 .sw{flex:1;min-width:180px;max-width:340px;position:relative}
 #srch{width:100%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:22px;padding:7px 14px 7px 36px;color:#fff;font-size:.85rem;outline:none;font-family:inherit}
 #srch::placeholder{color:rgba(255,255,255,.65)}
@@ -178,7 +177,6 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 <script>var NI=NI_PLACEHOLDER;</script>
 <nav><div class="navwrap">
   <div class="nt"><img class="nt-logo" src="upstream_logo.png" alt="Upstream Facility Services"><div class="nt-text"><span>Region 10B</span><span class="nt-sub">Global Search</span></div></div>
-  <span class="nb" id="tb">-</span>
   <div class="sw"><span class="si">&#128269;</span>
     <input id="srch" type="text" placeholder="Search part, tech, role, manager, location, mfr, date&#8230;" autocomplete="off">
   </div>
@@ -656,7 +654,7 @@ if(_ERR){
   document.body.prepend(eb);
 }else{
   try{
-    ge('tb').textContent=R.parts.length.toLocaleString()+' items';
+    // (item-count badge removed from nav per user request)
     ge('rts').textContent='Data as of BUILT_TS';
     bH();af();
     if(localStorage.getItem('sb-collapsed')==='1'){

@@ -402,11 +402,10 @@ h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .rm-section{{margin-bottom:28px}}
 .rm-title{{font-size:.78rem;font-weight:700;color:#8b949e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #30363d}}
 .cards{{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}}
-.card{{background:#161b22;border:1px solid #30363d;border-radius:10px;padding:14px 16px;text-decoration:none;display:block;transition:.12s}}
-.card:hover{{border-color:#58a6ff;background:#1c2432}}
 @keyframes wave10bSweep{{0%{{background-position:100% 0}}100%{{background-position:0% 0}}}}
-.ct{{font-size:.9rem;font-weight:700;margin-bottom:3px;color:#58a6ff;background:linear-gradient(100deg,#ffc220 0%,#ffc220 38%,#58a6ff 52%,#ffc220 66%,#ffc220 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:wave10bSweep 3.2s linear infinite;display:inline-block}}
-@supports not (background-clip:text){{.ct{{background:none;color:#58a6ff}}}}
+.card{{background:linear-gradient(100deg,#161b22 0%,#161b22 30%,#2a2412 48%,#0f2038 66%,#161b22 100%);background-size:260% 100%;animation:wave10bSweep 4.5s linear infinite;border:1px solid #30363d;border-radius:10px;padding:14px 16px;text-decoration:none;display:block;transition:border-color .12s}}
+.card:hover{{border-color:#58a6ff}}
+.ct{{font-size:.9rem;font-weight:700;margin-bottom:3px;color:#e9bf3f}}
 .cs{{font-size:.7rem;color:#8b949e;margin-bottom:8px}}
 .cd{{display:flex;gap:14px}}
 .sv{{text-align:center}}.sv-v{{font-size:1.1rem;font-weight:800;color:#e6edf3}}.sv-l{{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}}

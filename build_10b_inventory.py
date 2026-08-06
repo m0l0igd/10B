@@ -412,8 +412,8 @@ def build_inventory_portal():
 <title>Region 10B Parts Inventory</title>
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:32px 24px}}
-.pagewrap{{max-width:1100px;margin:0 auto}}
+body{{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:32px 24px;display:flex;justify-content:center}}
+.pagewrap{{max-width:1100px;width:100%;margin:0 auto}}
 h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .sub{{font-size:.82rem;color:#8b949e;margin-bottom:28px}}
 .rm-section{{margin-bottom:28px}}

@@ -56,10 +56,16 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 /* LAYOUT */
 .wrap{max-width:1600px;margin:12px auto 0;padding:0 20px 30px;display:flex;gap:16px}
 .sidebar{width:224px;flex-shrink:0;position:sticky;top:96px;max-height:calc(100vh - 110px);overflow-y:auto}
-@media(max-width:900px){.sidebar{display:none}.wrap{padding:0 12px 20px}}
+@media(max-width:900px){.wrap{padding:0 12px 20px}}
+@media(max-width:900px) and (orientation:portrait){.sidebar{display:none}}
 .main{flex:1;min-width:0}
 /* SIDEBAR */
 .sb-hd{font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 5px;border-bottom:1px solid var(--bd);margin-bottom:6px}
+.sb-toggle-hd{display:flex;align-items:center;justify-content:space-between;font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 5px;border-bottom:1px solid var(--bd);margin-bottom:6px;cursor:pointer;user-select:none}
+.sb-toggle-hd:hover{color:var(--tx)}
+.sb-arrow{font-size:.7rem;transition:transform .15s}
+.sb-arrow.collapsed{transform:rotate(-90deg)}
+.sb-body.collapsed{display:none}
 .sb-row{display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:6px;cursor:pointer;transition:background .1s}
 .sb-row:hover{background:var(--s2)}.sb-row.on{background:var(--s2);box-shadow:inset 2px 0 0 var(--blue)}
 .sb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
@@ -177,7 +183,13 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 </div>
 
 <div class="wrap">
-  <div class="sidebar" id="sidebar"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-toggle-hd" onclick="toggleSidebar()">
+      <span>Technician</span>
+      <span class="sb-arrow" id="sb-arrow">&#9662;</span>
+    </div>
+    <div class="sb-body" id="sidebar-body"></div>
+  </div>
   <div class="main">
     <div class="tbl-box">
       <div class="tbl-hdr">
@@ -375,15 +387,22 @@ function buildSidebar(){
     </div>`;
   }).join('');
   const noInv=D.no_inv.map(n=>`<div style="font-size:.65rem;color:var(--sub);padding:2px 4px">— ${n}</div>`).join('');
-  document.getElementById('sidebar').innerHTML=
-    `<div class="sb-hd">Technician</div>
-     <div class="sb-row ${!filters.tech?'on':''}" data-tech="" onclick="techFilter('')">
+  document.getElementById('sidebar-body').innerHTML=
+    `<div class="sb-row ${!filters.tech?'on':''}" data-tech="" onclick="techFilter('')">
        <div class="sb-dot" style="background:var(--sub)"></div>
        <div class="sb-info"><div class="sb-name">All Techs</div></div>
        <div class="sb-ct">${D.parts.length}</div>
      </div>
      ${rows}
      <div class="sb-footer"><b>No Inventory:</b>${noInv}</div>`;
+}
+
+function toggleSidebar(){
+  const body=document.getElementById('sidebar-body');
+  const arrow=document.getElementById('sb-arrow');
+  const collapsed=body.classList.toggle('collapsed');
+  arrow.classList.toggle('collapsed',collapsed);
+  localStorage.setItem('sb-collapsed',collapsed?'1':'0');
 }
 
 // ── SORT ───────────────────────────────────────────────────────────────────
@@ -569,7 +588,10 @@ document.getElementById('refresh-ts').textContent='Refreshed '+new Date().toLoca
 buildHeader();
 buildRows();
 buildSidebar();
-
+if(localStorage.getItem('sb-collapsed')==='1'){
+  document.getElementById('sidebar-body').classList.add('collapsed');
+  document.getElementById('sb-arrow').classList.add('collapsed');
+}
 // restore URL params (read-only, don't write back on init)
 const sp=new URLSearchParams(location.search);
 const qp=sp.get('q');

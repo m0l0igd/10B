@@ -139,6 +139,7 @@ def build_inventory_portal():
       COALESCE(fs_regional_manager_name,'') AS fs_rm,
       COALESCE(vehicle_tech_full_name,'STORE LOCATION') AS tech,
       COALESCE(vehicle_tech_role,'Shared/Store')         AS role,
+      isp_store_no            AS store_no,
       inventory_storage_area  AS area,
       inventory_storage_type  AS loc_type,
       item_id,
@@ -209,8 +210,12 @@ def build_inventory_portal():
         # Exclude generic placeholder technicians
         if tech in ('1', '366-A-FE', '366-A-FS', '367-A-FS', ''):
             continue
-            
-        display = tech.title() if tech != 'STORE LOCATION' else 'Store Inventory'
+
+        if tech == 'STORE LOCATION':
+            store_no = (r.store_no or '').strip()
+            display = f'WM#{store_no}' if store_no else 'Store Inventory'
+        else:
+            display = tech.title()
         tc = round(r.tcost, 2) if r.tcost else 0.0
         if tc <= 0:
             continue

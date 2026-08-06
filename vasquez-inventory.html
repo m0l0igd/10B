@@ -51,17 +51,18 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .stat-l{font-size:.6rem;color:var(--sub);text-transform:uppercase;letter-spacing:.06em;margin-top:3px}
 /* LAYOUT */
 .wrap{max-width:1600px;margin:12px auto 0;padding:0 20px 30px;display:flex;gap:16px}
-.sidebar{width:224px;flex-shrink:0;position:sticky;top:96px;max-height:calc(100vh - 110px);overflow-y:auto}
+.sb-shell{display:flex;align-items:flex-start;flex-shrink:0;gap:6px;position:sticky;top:96px}
+.sidebar{width:224px;flex-shrink:0;max-height:calc(100vh - 110px);overflow-y:auto;overflow-x:hidden;transition:width .2s ease,opacity .15s ease;opacity:1}
+.sidebar.collapsed{width:0;opacity:0;pointer-events:none}
+.sb-tab{width:20px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--s1);border:1px solid var(--bd);border-radius:6px;user-select:none}
+.sb-tab:hover{background:var(--s2);border-color:var(--gold)}
+.sb-arrow{color:var(--gold);font-size:.8rem;line-height:1;transition:transform .2s ease;display:block}
+.sb-arrow.collapsed{transform:rotate(180deg)}
 @media(max-width:900px){.wrap{padding:0 12px 20px}}
-@media(max-width:900px) and (orientation:portrait){.sidebar{display:none}}
+@media(max-width:900px) and (orientation:portrait){.sb-shell{display:none}}
 .main{flex:1;min-width:0}
 /* SIDEBAR */
-.sb-hd{font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 5px;border-bottom:1px solid var(--bd);margin-bottom:6px}
-.sb-toggle-hd{display:flex;align-items:center;justify-content:space-between;font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 5px;border-bottom:1px solid var(--bd);margin-bottom:6px;cursor:pointer;user-select:none}
-.sb-toggle-hd:hover{color:var(--tx)}
-.sb-arrow{font-size:.7rem;transition:transform .15s}
-.sb-arrow.collapsed{transform:rotate(-90deg)}
-.sb-body.collapsed{display:none}
+.sb-hd{font-size:.65rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;padding:0 4px 5px;border-bottom:1px solid var(--bd);margin-bottom:6px;white-space:nowrap}
 .sb-row{display:flex;align-items:center;gap:7px;padding:5px 6px;border-radius:6px;cursor:pointer;transition:background .1s}
 .sb-row:hover{background:var(--s2)}.sb-row.on{background:var(--s2);box-shadow:inset 2px 0 0 var(--blue)}
 .sb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
@@ -70,6 +71,7 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .sb-bar-wrap{height:3px;background:var(--bd);border-radius:2px;margin-top:3px;overflow:hidden}
 .sb-bar{height:100%;border-radius:2px}
 .sb-ct{font-size:.65rem;color:var(--sub);flex-shrink:0}
+.sb-ct.low{color:var(--red);font-weight:700}
 .sb-footer{margin-top:14px;padding:8px;background:var(--s2);border:1px solid var(--bd);border-radius:6px;font-size:.65rem;color:var(--sub);line-height:1.7}
 .sb-footer b{color:var(--tx);display:block;margin-bottom:2px}
 /* TABLE */
@@ -144,7 +146,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
     <button class="srch-clr" onclick="clearSearch()" title="Clear search">✕</button>
   </div>
   <div class="nav-r">
-    <a href="index.html?v=1785975437" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><a href="10b-inventory.html?v=1785975437" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a><button class="nbtn" onclick="copyLink(this)">🔗 Share</button>
+    <a href="index.html?v=1785976114" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a><a href="10b-inventory.html?v=1785976114" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a><button class="nbtn" onclick="copyLink(this)">🔗 Share</button>
     <button class="nbtn" onclick="toggleTheme()">☀️/🌙</button>
   </div>
 </nav>
@@ -179,12 +181,14 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 </div>
 
 <div class="wrap">
-  <div class="sidebar" id="sidebar">
-    <div class="sb-toggle-hd" onclick="toggleSidebar()">
-      <span>Technician</span>
-      <span class="sb-arrow" id="sb-arrow">&#9662;</span>
+  <div class="sb-shell">
+    <div class="sidebar" id="sidebar">
+      <div class="sb-hd">Technician</div>
+      <div id="sidebar-body"></div>
     </div>
-    <div class="sb-body" id="sidebar-body"></div>
+    <div class="sb-tab" onclick="toggleSidebar()" title="Show/hide technician list">
+      <span class="sb-arrow" id="sb-arrow">&#9668;</span>
+    </div>
   </div>
   <div class="main">
     <div class="tbl-box">
@@ -368,18 +372,20 @@ function applyFilters(){
 }
 
 // ── SIDEBAR ────────────────────────────────────────────────────────────────
+const LOW_ITEM_THRESHOLD=25;
 function buildSidebar(){
   const maxV=Math.max(...D.techs.map(t=>t.value));
   const rows=D.techs.map(t=>{
     const pct=Math.round(t.value/maxV*100);
     const col=ROLE_COL[t.role]||'#bc8cff';
+    const lowCls=t.items<LOW_ITEM_THRESHOLD?' low':'';
     return`<div class="sb-row" data-tech="${t.tech}" onclick="techFilter('${t.tech.replace(/'/g,"\\'")}')">
       <div class="sb-dot" style="background:${col}"></div>
       <div class="sb-info">
         <div class="sb-name" title="${t.tech}">${t.tech}</div>
         <div class="sb-bar-wrap"><div class="sb-bar" style="width:${pct}%;background:${col}"></div></div>
       </div>
-      <div class="sb-ct">${t.items}</div>
+      <div class="sb-ct${lowCls}">${t.items}</div>
     </div>`;
   }).join('');
   const noInv=D.no_inv.map(n=>`<div style="font-size:.65rem;color:var(--sub);padding:2px 4px">— ${n}</div>`).join('');
@@ -394,9 +400,9 @@ function buildSidebar(){
 }
 
 function toggleSidebar(){
-  const body=document.getElementById('sidebar-body');
+  const panel=document.getElementById('sidebar');
   const arrow=document.getElementById('sb-arrow');
-  const collapsed=body.classList.toggle('collapsed');
+  const collapsed=panel.classList.toggle('collapsed');
   arrow.classList.toggle('collapsed',collapsed);
   localStorage.setItem('sb-collapsed',collapsed?'1':'0');
 }
@@ -585,7 +591,7 @@ buildHeader();
 buildRows();
 buildSidebar();
 if(localStorage.getItem('sb-collapsed')==='1'){
-  document.getElementById('sidebar-body').classList.add('collapsed');
+  document.getElementById('sidebar').classList.add('collapsed');
   document.getElementById('sb-arrow').classList.add('collapsed');
 }
 // restore URL params (read-only, don't write back on init)

@@ -72,6 +72,19 @@ HIER = {
 
 MGR_TO_SUB = {v['mgr'].upper(): k for k, v in HIER.items()}
 
+# Raw fs_manager_name sometimes rolls up to the REGIONAL manager's own name
+# (data quality issue upstream) instead of being genuinely blank -- e.g.
+# fs_manager_name='ISRAEL PINO' on rows that are actually his own RM-level
+# rollup, not a real FS Manager named Israel Pino. Block all known regional
+# manager names (plus nickname variants) from ever being accepted as an FS
+# Manager value, so they can't leak into the FS Manager tier/dropdown.
+_RM_NICKNAMES = {'GABE MACIAS': ['GABRIEL MACIAS']}
+_ALL_RM_NAMES = set()
+for _h in HIER.values():
+    _rm_upper = _h['reg_mgr'].upper()
+    _ALL_RM_NAMES.add(_rm_upper)
+    _ALL_RM_NAMES.update(_RM_NICKNAMES.get(_rm_upper, []))
+
 ROLE_MAP = {
     'GM TECHNICIAN':             'GM',
     'HVAC/R TECHNICIAN':         'HVACR',
@@ -184,7 +197,10 @@ def build_inventory_portal():
 
         # Clean and assign real manager row-by-row to prevent incorrect groupings!
         raw_mgr = r.fs_mgr
-        if raw_mgr and raw_mgr != 'NULL' and '366-A' not in raw_mgr.upper() and '367-A' not in raw_mgr.upper() and 'UNKNOWN' not in raw_mgr.upper():
+        if (raw_mgr and raw_mgr != 'NULL'
+                and '366-A' not in raw_mgr.upper() and '367-A' not in raw_mgr.upper()
+                and 'UNKNOWN' not in raw_mgr.upper()
+                and raw_mgr.upper() not in _ALL_RM_NAMES):
             mgr = raw_mgr.title()
         else:
             mgr = h['mgr']

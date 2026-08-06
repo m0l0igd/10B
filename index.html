@@ -33,12 +33,26 @@ window.onerror = function(message, source, lineno, colno, error) {
 </script>
 
 <div class="nt" style="display:flex;align-items:center;gap:14px;margin-bottom:6px"><img src="upstream_logo.png" alt="Upstream Facility Services" style="height:44px;width:auto;display:block"><span style="font-size:1.4rem;font-weight:800;color:#e9bf3f">Region 10B</span></div>
-<div class="sub" style="font-size:.78rem;font-weight:600;color:#ffc220;letter-spacing:.03em;border-top:2px solid #e9bf3f;padding-top:6px;margin-bottom:20px;display:inline-block">Select a manager to view their team's inventory • 15 Sub-Markets • re-ods-prod</div>
 
-<!-- Prominent Global Search Button using Walmart Colors with cache-busting! -->
+<!-- Prominent Global Search Button -- gold base with a continuous animated
+     blue wave cascading across it (always moving, not just on hover) -->
+<style>
+@keyframes wave10bSweep{0%{background-position:100% 0}100%{background-position:0% 0}}
+.wave10b-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(100deg,#ffc220 0%,#ffc220 38%,#0053e2 52%,#ffc220 66%,#ffc220 100%);
+  background-size:260% 100%;
+  animation:wave10bSweep 3.2s linear infinite;
+  color:#fff;font-weight:800;font-size:.98rem;
+  padding:13px 22px;border-radius:10px;text-decoration:none;
+  text-shadow:0 1px 3px rgba(0,0,0,.55);
+  box-shadow:0 3px 12px rgba(0,0,0,.35);
+}
+.wave10b-btn:hover{animation-duration:1.4s;box-shadow:0 4px 16px rgba(0,0,0,.5)}
+</style>
 <div style="margin-bottom: 25px;">
-    <a href="10b-inventory.html?v=1785987246" style="display:inline-flex;align-items:center;background:#0053e2;color:#fff;font-weight:700;padding:12px 20px;border-radius:10px;text-decoration:none;box-shadow:0 3px 10px rgba(0,83,226,0.3);transition:all 0.15s;font-size:0.95rem" onmouseover="this.style.background='#0043b2';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='#0053e2';this.style.transform='translateY(0)'">
-      <span style="font-size:1.1rem;margin-right:8px">🔍</span> Search ALL Region 10B Parts (Global Search)
+    <a href="10b-inventory.html?v=1785987521" class="wave10b-btn">
+      <span style="font-size:1.15rem">&#128269;</span> 10B Full Search
     </a>
 </div>
 <div class="rm-section"><div class="rm-title">ISRAEL PINO</div><div class="cards">
@@ -178,6 +192,6 @@ window.onerror = function(message, source, lineno, colno, error) {
             </a>
             </div></div>
 <footer>
-    <span>Region 10B • 15 Sub-Markets • re-ods-prod.semantic_fs_zeus_parts_inventory • Refreshed: 2026-08-05 20:34:06</span>
+    <span>Region 10B • 15 Sub-Markets • re-ods-prod.semantic_fs_zeus_parts_inventory • Refreshed: 2026-08-05 20:38:41</span>
 </footer>
 </body></html>

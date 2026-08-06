@@ -399,7 +399,7 @@ function lM(){page++;rP();}
 function rH(p,i){
   var sl='r'+i,rc=RCLS[ROLESV[p[ROI]]]||'st';
   var tech=TECHSV[p[TI]],mgr=MGRSV[p[MI]],rm=RMSV[p[RI]],sub=SUBSV[p[SI]],role=ROLESV[p[ROI]];
-  var td=tech==='Store Inventory'?'<em style="color:var(--sub)">Store Inventory</em>':esc(tech);
+  var td=tech.indexOf('WM#')===0?'<em style="color:var(--sub)">'+esc(tech)+'</em>':esc(tech);
   var manualImg=getManualImg(p[PN]);
   var imgSrc=p[IMG]||manualImg;
   var imgBlock;

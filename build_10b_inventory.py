@@ -360,11 +360,20 @@ def build_inventory_portal():
         html = html.replace('367-A · re-ods-prod',            f'{sub} · re-ods-prod')
         
         # Add dynamic navigation links to go to Hub (index.html) or Global Search (10b-inventory.html) with cache-busting!
+        _mgr_share_btn = ('<button class="nbtn" onclick="copyLink(this)" title="Copy share link">'
+            '<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/>'
+            '<circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/>'
+            '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+            '</svg> Share</button>')
+        _mgr_home_svg = ('<svg width="16" height="16" viewBox="0 0 24 24">'
+            '<g fill="#ffc220">'
+            '<path d="M12 1.5 L13.6 8.4 L20 6 L15.5 11.2 L22 12 L15.5 12.8 L20 18 L13.6 15.6 L12 22.5 L10.4 15.6 L4 18 L8.5 12.8 L2 12 L8.5 11.2 L4 6 L10.4 8.4 Z"/>'
+            '</g></svg>')
         html = html.replace(
-            '<button class="nbtn" onclick="copyLink(this)">🔗 Share</button>',
-            f'<a href="index.html?v={int(time.time())}" class="nbtn" style="text-decoration:none;margin-right:6px">🏠 Hub</a>'
-            f'<a href="10b-inventory.html?v={int(time.time())}" class="nbtn" style="text-decoration:none;margin-right:6px">🔍 Global Search</a>'
-            '<button class="nbtn" onclick="copyLink(this)">🔗 Share</button>'
+            _mgr_share_btn,
+            f'<a href="index.html?v={int(time.time())}" class="nbtn" style="text-decoration:none">{_mgr_home_svg} Home</a>'
+            f'<a href="10b-inventory.html?v={int(time.time())}" class="nbtn" style="text-decoration:none">&#128269; Global Search</a>'
+            + _mgr_share_btn
         )
         
         html = html.replace('PAYLOAD_PLACEHOLDER', mgr_payload)
@@ -506,10 +515,19 @@ window.onerror = function(message, source, lineno, colno, error) {{
     # Inject navigation link back to hub with cache busting! (user prefers
     # calling this "Home" rather than "Hub" -- this replaces the old
     # separate built-in Home button that used to live on the far left)
+    _share_btn_html = ('<button class="btn" onclick="cpLink(this)" title="Copy share link">'
+        '<svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/>'
+        '<circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/>'
+        '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
+        '</svg> Share</button>')
+    _home_btn_svg = ('<svg width="16" height="16" viewBox="0 0 24 24">'
+        '<g fill="#ffc220">'
+        '<path d="M12 1.5 L13.6 8.4 L20 6 L15.5 11.2 L22 12 L15.5 12.8 L20 18 L13.6 15.6 L12 22.5 L10.4 15.6 L4 18 L8.5 12.8 L2 12 L8.5 11.2 L4 6 L10.4 8.4 Z"/>'
+        '</g></svg>')
     global_html = global_html.replace(
-        '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>',
-        f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none;margin-right:6px">&#127968; Home</a>'
-        '<button class="btn" onclick="cpLink(this)">&#128279; Share</button>'
+        _share_btn_html,
+        f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none">{_home_btn_svg} Home</a>'
+        + _share_btn_html
     )
     
     # Inject active error banner diagnoser at top of body

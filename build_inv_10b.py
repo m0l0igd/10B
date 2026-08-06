@@ -62,29 +62,26 @@ HTML = """<!DOCTYPE html>
 body.light{--bg:#f6f8fa;--s1:#fff;--s2:#f6f8fa;--bd:#d0d7de;--tx:#1f2328;--sub:#57606a;--blue:#0969da;--grn:#1a7f37;--red:#cf222e;--amb:#9a6700;--pur:#8250df}
 body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px}
 nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.navwrap{max-width:1600px;margin:0 auto;width:100%;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .nt{font-weight:700;font-size:1rem;color:#fff;white-space:nowrap;display:flex;align-items:center;gap:10px}
 .nt-logo{height:44px;width:auto;display:block}
 .nt-text{display:flex;flex-direction:column;line-height:1.15}
 .nt-sub{font-size:.62rem;font-weight:600;color:#ffc220;letter-spacing:.03em;border-top:2px solid #e9bf3f;padding-top:2px;margin-top:1px}
 .nb{background:rgba(255,255,255,.2);color:#fff;border-radius:12px;padding:2px 9px;font-size:.7rem}
-.sw{flex:1;min-width:200px;max-width:460px;position:relative}
+.sw{flex:1;min-width:180px;max-width:340px;position:relative}
 #srch{width:100%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:22px;padding:7px 14px 7px 36px;color:#fff;font-size:.85rem;outline:none;font-family:inherit}
 #srch::placeholder{color:rgba(255,255,255,.65)}
 #srch:focus{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.7)}
 .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.7);pointer-events:none}
-.btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:5px 12px;font-size:.72rem;color:#fff;cursor:pointer;font-family:inherit}
+.btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:6px 12px;font-size:.72rem;color:#fff;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{background:rgba(255,255,255,.28)}
-.hbar{background:var(--wmt2);border-bottom:2px solid rgba(255,255,255,.15);padding:8px 20px;display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap}
-.hc{display:flex;flex-direction:column;gap:5px}
-.hl{font-size:.6rem;font-weight:700;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.08em}
-.hps{display:flex;gap:5px;flex-wrap:wrap}
-.hp{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:3px 11px;font-size:.7rem;color:rgba(255,255,255,.85);cursor:pointer;white-space:nowrap;font-family:inherit}
-.hsel{background:var(--wmt);border:1.5px solid var(--gold);border-radius:20px;padding:5px 30px 5px 14px;font-size:.75rem;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffc220' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:14px;min-width:160px}
+.btn svg{display:block;flex-shrink:0}
+.nr2{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.hsel{background:var(--wmt2);border:1.5px solid var(--gold);border-radius:20px;padding:5px 28px 5px 12px;font-size:.7rem;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffc220' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;background-size:12px;min-width:120px;max-width:160px}
 .hsel:hover{border-color:#fff}
 .hsel:focus{outline:none;border-color:#fff;box-shadow:0 0 0 2px rgba(255,194,32,.35)}
 .hsel option{background:var(--wmt2);color:#fff}
-.hp:hover{background:rgba(255,255,255,.22)}.hp.on{background:#fff;color:var(--wmt);font-weight:700}
-.hp.hid{display:none}
+@media(max-width:960px){.hsel{min-width:90px;max-width:110px;font-size:.66rem;padding:5px 22px 5px 10px}}
 .fb{background:var(--s1);border-bottom:1px solid var(--bd);padding:7px 20px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .fl{font-size:.67rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
 .pl{background:var(--s2);border:1px solid var(--bd);border-radius:20px;padding:3px 11px;font-size:.7rem;color:var(--sub);cursor:pointer;white-space:nowrap;font-family:inherit}
@@ -179,22 +176,20 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 </style></head><body>
 <script>var _D=""" + P + """;</script>
 <script>var NI=NI_PLACEHOLDER;</script>
-<nav>
+<nav><div class="navwrap">
   <div class="nt"><img class="nt-logo" src="upstream_logo.png" alt="Upstream Facility Services"><div class="nt-text"><span>Region 10B</span><span class="nt-sub">Global Search</span></div></div>
   <span class="nb" id="tb">-</span>
   <div class="sw"><span class="si">&#128269;</span>
     <input id="srch" type="text" placeholder="Search part, tech, role, manager, location, mfr, date&#8230;" autocomplete="off">
   </div>
+  <div class="hc"><select class="hsel" id="rmSel" onchange="sRM(this.value)"></select></div>
+  <div class="hc"><select class="hsel" id="mgrSel" onchange="sMGR(this.value)"></select></div>
+  <div class="hc"><select class="hsel" id="techSel" onchange="sTechSel(this.value)"></select></div>
   <div class="nr2">
-    <button class="btn" onclick="cpLink(this)">&#128279; Share</button>
-    <button class="btn" onclick="togT()">&#9728;/&#127769;</button>
+    <button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
+    <button class="btn" onclick="togT()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
   </div>
-</nav>
-<div class="hbar">
-  <div class="hc"><div class="hl">Regional Manager</div><select class="hsel" id="rmSel" onchange="sRM(this.value)"></select></div>
-  <div class="hc"><div class="hl">FS Manager</div><select class="hsel" id="mgrSel" onchange="sMGR(this.value)"></select></div>
-  <div class="hc"><div class="hl">Technician</div><select class="hsel" id="techSel" onchange="sTechSel(this.value)"></select></div>
-</div>
+</div></nav>
 <div class="fb">
   <span class="fl">Role:</span>
   <button class="pl on" data-g="role" data-v="" onclick="sF('role','',this)">All</button>

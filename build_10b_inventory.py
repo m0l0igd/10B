@@ -365,9 +365,14 @@ def build_inventory_portal():
             '<circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/>'
             '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
             '</svg> Share</button>')
-        _mgr_home_svg = ('<svg width="16" height="16" viewBox="0 0 24 24">'
+        _mgr_home_svg = ('<svg width="18" height="18" viewBox="0 0 24 24">'
             '<g fill="#ffc220">'
-            '<path d="M12 1.5 L13.6 8.4 L20 6 L15.5 11.2 L22 12 L15.5 12.8 L20 18 L13.6 15.6 L12 22.5 L10.4 15.6 L4 18 L8.5 12.8 L2 12 L8.5 11.2 L4 6 L10.4 8.4 Z"/>'
+            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z"/>'
+            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(60 12 12)"/>'
+            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(120 12 12)"/>'
+            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(180 12 12)"/>'
+            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(240 12 12)"/>'
+            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(300 12 12)"/>'
             '</g></svg>')
         html = html.replace(
             _mgr_share_btn,
@@ -406,7 +411,7 @@ def build_inventory_portal():
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:32px 24px}}
-.pagewrap{{max-width:1200px;margin:0 auto}}
+.pagewrap{{max-width:1100px;margin:0 auto}}
 h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .sub{{font-size:.82rem;color:#8b949e;margin-bottom:28px}}
 .rm-section{{margin-bottom:28px}}
@@ -520,9 +525,14 @@ window.onerror = function(message, source, lineno, colno, error) {{
         '<circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/>'
         '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
         '</svg> Share</button>')
-    _home_btn_svg = ('<svg width="16" height="16" viewBox="0 0 24 24">'
+    _home_btn_svg = ('<svg width="18" height="18" viewBox="0 0 24 24">'
         '<g fill="#ffc220">'
-        '<path d="M12 1.5 L13.6 8.4 L20 6 L15.5 11.2 L22 12 L15.5 12.8 L20 18 L13.6 15.6 L12 22.5 L10.4 15.6 L4 18 L8.5 12.8 L2 12 L8.5 11.2 L4 6 L10.4 8.4 Z"/>'
+        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z"/>'
+        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(60 12 12)"/>'
+        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(120 12 12)"/>'
+        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(180 12 12)"/>'
+        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(240 12 12)"/>'
+        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(300 12 12)"/>'
         '</g></svg>')
     global_html = global_html.replace(
         _share_btn_html,

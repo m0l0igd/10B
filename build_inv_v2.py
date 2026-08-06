@@ -322,7 +322,7 @@ function buildRows(){
         onclick="togExp('${sl}')">
       <td style="font-size:.78rem;font-weight:700;color:#58a6ff;font-family:monospace">${p.pno||'—'}</td>
       <td><div class="c-desc">${p.desc}</div>${(p.fdesc&&p.fdesc!==p.desc)?`<div class="c-fdesc">${p.fdesc}</div>`:''}<div class="c-id">${p.id}</div></td>
-      <td class="c-tech">${p.tech==='Store Inventory'?'<em style="color:var(--sub)">Store Inventory</em>':p.tech}</td>
+      <td class="c-tech">${p.tech.indexOf('WM#')===0?'<em style="color:var(--sub)">'+p.tech+'</em>':p.tech}</td>
       <td><span class="rb ${ROLE_CLS[p.role]||'rb-st'}">${p.role}</span></td>
       <td class="c-area">${p.area}</td>
       <td style="text-align:right">${fmtN(p.qty)}</td>

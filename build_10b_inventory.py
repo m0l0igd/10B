@@ -397,6 +397,7 @@ def build_inventory_portal():
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{background:#0d1117;color:#e6edf3;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;padding:32px 24px}}
+.pagewrap{{max-width:1200px;margin:0 auto}}
 h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .sub{{font-size:.82rem;color:#8b949e;margin-bottom:28px}}
 .rm-section{{margin-bottom:28px}}
@@ -411,6 +412,7 @@ h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .sv{{text-align:center}}.sv-v{{font-size:1.1rem;font-weight:800;color:#e6edf3}}.sv-l{{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}}
 footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px}}
 </style></head><body>
+<div class="pagewrap">
 
 <!-- Live Javascript Error Diagnoser Block -->
 <div id="error-banner" style="display:none;background:#ffdddd;color:#ea1100;border:2px solid #ea1100;padding:15px;margin:20px 0;border-radius:8px;font-family:monospace;font-size:14px;white-space:pre-wrap;z-index:9999;position:relative;"></div>
@@ -472,6 +474,7 @@ window.onerror = function(message, source, lineno, colno, error) {{
 <footer>
     <span>Region 10B • 15 Sub-Markets • re-ods-prod.semantic_fs_zeus_parts_inventory • Refreshed: {time.strftime('%Y-%m-%d %X')}</span>
 </footer>
+</div>
 </body></html>
 """
 

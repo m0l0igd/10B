@@ -19,6 +19,22 @@ ENRICHED_PARTS_FILE = r"C:\Users\Public\10B\sdi_scraper\enriched_parts.json"
 # These take priority over ZEUS results since a human curated them.
 MANUAL_OVERRIDES_FILE = r"C:\Users\Public\10B\sdi_scraper\manual_overrides.json"
 
+# Precomputed perceptual hashes (dHash) for every catalog part image, built
+# by sdi_scraper/compute_phash_cache.py (or the shard+merge scripts). Used
+# for the "Search by Photo" feature on the global search page -- keyed by
+# image_url, safe no-op if not present yet.
+PHASH_CACHE_FILE = r"C:\Users\Public\10B\sdi_scraper\phash_cache.json"
+
+
+def load_phash_cache():
+    try:
+        with open(PHASH_CACHE_FILE, encoding="utf-8") as f:
+            raw = json.load(f)
+        # Map image_url -> hash string (skip failed/None hashes)
+        return {url: v["hash"] for url, v in raw.items() if v.get("hash")}
+    except Exception:
+        return {}
+
 
 def load_manual_overrides():
     try:
@@ -190,6 +206,8 @@ def build_inventory_portal():
     print(f"Loaded {len(enriched)} ZEUS-enriched parts (images/descriptions) for merge...")
     manual_imgs = load_manual_overrides()
     print(f"Loaded {len(manual_imgs)} manually-submitted images for merge...")
+    phash_cache = load_phash_cache()
+    print(f"Loaded {len(phash_cache)} precomputed photo-hashes for Search by Photo...")
     parts = []
     for r in rows:
         sub = r.fs_sub_market or ''
@@ -238,6 +256,8 @@ def build_inventory_portal():
         if tc <= 0:
             continue
 
+        _img = manual_imgs.get((r.item_manufacturer_part_no or '').upper()) or (enriched.get((r.item_manufacturer_part_no or '').upper()) or {}).get("image_url") or ''
+
         parts.append({
             "sub":  sub,
             "rm":   rm,
@@ -262,7 +282,8 @@ def build_inventory_portal():
             "putaway":  r.putaway,
             "last_order":r.last_order,
             "goh":  int(r.goh) if r.goh else 0,
-            "img":  manual_imgs.get((r.item_manufacturer_part_no or '').upper()) or (enriched.get((r.item_manufacturer_part_no or '').upper()) or {}).get("image_url") or '',
+            "img":  _img,
+            "phash":phash_cache.get(_img, '') if _img else '',
         })
 
     # Group tech summaries dynamically based on correct manager alignments!
@@ -302,7 +323,7 @@ def build_inventory_portal():
             p['area'],p['id'],p['desc'],p['mfr'] or '',p['pno'] or '',
             p['qty'],p['ucost'],p['tcost'],p['area_total'],
             p['rop'],p['maxq'],p['rep'],p['putaway'] or '',p['last_order'] or '',p['goh'],
-            p['fdesc'] or '',p['img'] or '',
+            p['fdesc'] or '',p['img'] or '',p['phash'] or '',
         ])
 
     compact_techs=[]

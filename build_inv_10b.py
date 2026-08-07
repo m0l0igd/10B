@@ -295,7 +295,7 @@ var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,R
 var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
 var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:13,a:false},filtered=[],page=0;
-var photoMatchActive=false,photoMatchDistByHash=null,photoMatchHasClose=false,PM_MAX_DIST=20;
+var photoMatchActive=false,photoMatchDistByHash=null,photoMatchHasClose=false,PM_MAX_DIST=20,PM_TOPN=40;
 var dark=localStorage.getItem('t10b')!=='light';
 var RM_MGRS={},MGR_RM={},MGR_TECHS={};
 R.tech_rows.forEach(function(t){
@@ -374,7 +374,10 @@ function af(){
     if(photoMatchActive){
       var ph=p[PH];
       if(!ph||!(ph in photoMatchDistByHash))return false;
-      if(photoMatchDistByHash[ph]>PM_MAX_DIST)return false;
+      // No hard distance cutoff here -- always surface the closest available
+      // matches (ranked below) rather than risking zero results just because
+      // a real-world phone photo naturally scores a bit further out than a
+      // clean catalog photo would. PM_TOPN below caps how many we actually show.
     }
     if(q){
       var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[FD]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
@@ -395,6 +398,7 @@ function af(){
   // always sort explicitly now.
   if(photoMatchActive){
     filtered.sort(function(a,b){return photoMatchDistByHash[a[PH]]-photoMatchDistByHash[b[PH]];});
+    filtered=filtered.slice(0,PM_TOPN);
   }else{
     filtered.sort(function(a,b){
       var va=a[SRT.c],vb=b[SRT.c];
@@ -579,7 +583,14 @@ function computeDHashFromImage(img){
   var w=PM_HASH_SIZE+1,h=PM_HASH_SIZE;
   var cv=document.createElement('canvas');cv.width=w;cv.height=h;
   var ctx=cv.getContext('2d');
-  ctx.drawImage(img,0,0,w,h);
+  // Center-crop to a square BEFORE the tiny resize -- otherwise a portrait
+  // phone photo gets squashed/stretched completely differently than a
+  // square/landscape catalog photo of the same part, and the hash ends up
+  // dominated by aspect-ratio distortion instead of the actual part shape.
+  var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
+  var side=Math.min(sw,sh);
+  var sx=(sw-side)/2,sy=(sh-side)/2;
+  ctx.drawImage(img,sx,sy,side,side,0,0,w,h);
   var data=ctx.getImageData(0,0,w,h).data;
   var gray=[];
   for(var i=0;i<data.length;i+=4){
@@ -659,10 +670,14 @@ function runPhotoMatch(uploadedHash,previewDataUrl){
   ge('pmimg').src=previewDataUrl;
   ge('pmbar').classList.add('on');
   var pmtxt=ge('pmtxt');
-  if(bestDist<=PM_MAX_DIST){
-    pmtxt.textContent='Showing closest catalog-photo matches (best match distance: '+bestDist+' of 81 bits)';
+  if(bestDist>=999){
+    pmtxt.textContent='No parts with catalog photos to compare against -- try clearing the search/filters above and try again.';
+  }else if(bestDist<=10){
+    pmtxt.textContent='Strong visual match found (distance '+bestDist+' of 81) -- showing closest '+PM_TOPN+' catalog-photo matches, best first.';
+  }else if(bestDist<=25){
+    pmtxt.textContent='Possible matches found (distance '+bestDist+' of 81) -- showing closest '+PM_TOPN+' catalog-photo matches, best first. Results may include similar-looking but different parts.';
   }else{
-    pmtxt.textContent='No close visual matches found in the catalog for this photo. Try a clearer, well-lit, close-up shot of just the part.';
+    pmtxt.textContent='No strong visual matches in the catalog -- showing the '+PM_TOPN+' closest available anyway (distance '+bestDist+' of 81, so treat these as loose guesses). Try a clearer, well-lit, close-up shot of just the part against a plain background.';
   }
   af();
 }

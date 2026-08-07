@@ -367,16 +367,7 @@ def build_inventory_portal():
             '<circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/>'
             '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
             '</svg> Share</button>')
-        _mgr_home_svg = ('<svg width="18" height="18" viewBox="0 0 24 24">'
-            '<circle cx="12" cy="12" r="11" fill="#0071ce"/>'
-            '<g fill="#ffc220">'
-            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z"/>'
-            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(60 12 12)"/>'
-            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(120 12 12)"/>'
-            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(180 12 12)"/>'
-            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(240 12 12)"/>'
-            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(300 12 12)"/>'
-            '</g></svg>')
+        _mgr_home_svg = '<img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt="">'
         html = html.replace(
             _mgr_share_btn,
             f'<a href="index.html?v={int(time.time())}" title="Home" class="nbtn" style="text-decoration:none">'
@@ -529,16 +520,7 @@ window.onerror = function(message, source, lineno, colno, error) {{
         '<circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/>'
         '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
         '</svg> Share</button>')
-    _home_btn_svg = ('<svg width="18" height="18" viewBox="0 0 24 24">'
-        '<circle cx="12" cy="12" r="11" fill="#0071ce"/>'
-        '<g fill="#ffc220">'
-        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z"/>'
-        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(60 12 12)"/>'
-        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(120 12 12)"/>'
-        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(180 12 12)"/>'
-        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(240 12 12)"/>'
-        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(300 12 12)"/>'
-        '</g></svg>')
+    _home_btn_svg = '<img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt="">'
     global_html = global_html.replace(
         _share_btn_html,
         f'<a href="index.html?v={int(time.time())}" title="Home" class="btn" style="text-decoration:none">'

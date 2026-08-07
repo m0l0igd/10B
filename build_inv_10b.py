@@ -68,10 +68,20 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .nt-text{display:flex;flex-direction:column;line-height:1.15}
 .nt-sub{font-size:.62rem;font-weight:600;color:#ffc220;letter-spacing:.03em;border-top:2px solid #e9bf3f;padding-top:2px;margin-top:1px}
 .sw{flex:1;min-width:180px;max-width:340px;position:relative}
-#srch{width:100%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:22px;padding:7px 14px 7px 36px;color:#fff;font-size:.85rem;outline:none;font-family:inherit}
+#srch{width:100%;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:22px;padding:7px 34px 7px 36px;color:#fff;font-size:.85rem;outline:none;font-family:inherit}
 #srch::placeholder{color:rgba(255,255,255,.65)}
 #srch:focus{background:rgba(255,255,255,.26);border-color:rgba(255,255,255,.7)}
 .si{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:rgba(255,255,255,.7);pointer-events:none}
+.camf{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:#ffc220;cursor:pointer;padding:2px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.camf:hover{background:rgba(255,255,255,.18)}
+.camf.busy svg{animation:camspin 1s linear infinite}
+@keyframes camspin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+.pmbar{max-width:1600px;margin:0 auto;padding:8px 20px 0;display:none;align-items:center;gap:10px}
+.pmbar.on{display:flex}
+.pmimg{width:38px;height:38px;object-fit:cover;border-radius:6px;border:1px solid var(--bd)}
+.pmtxt{font-size:.72rem;color:var(--sub)}
+.pmclr{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;font-size:.68rem;color:var(--tx);cursor:pointer}
+.pmclr:hover{background:var(--s2)}
 .btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:6px 12px;font-size:.72rem;color:#fff;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{background:rgba(255,255,255,.28)}
 .btn svg{display:block;flex-shrink:0}
@@ -184,6 +194,8 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <div class="nt"><img class="nt-logo" src="upstream_logo.png" alt="Upstream Facility Services"><div class="nt-text"><span>Region 10B</span><span class="nt-sub">Global Search</span></div></div>
   <div class="sw"><span class="si">&#128269;</span>
     <input id="srch" type="text" placeholder="Search part, tech, role, manager, location, mfr, date&#8230;" autocomplete="off">
+    <button class="camf" id="camBtn" title="Search by Photo" onclick="document.getElementById('camInp').click()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.4"/></svg></button>
+    <input type="file" id="camInp" accept="image/*" capture="environment" style="display:none" onchange="onPhotoPick(event)">
   </div>
   <div class="hc"><select class="hsel" id="rmSel" onchange="sRM(this.value)"></select></div>
   <div class="hc"><select class="hsel" id="mgrSel" onchange="sMGR(this.value)"></select></div>
@@ -204,6 +216,11 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
     <button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
     <button class="btn" onclick="togT()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
   </div>
+</div>
+<div class="pmbar" id="pmbar">
+  <img class="pmimg" id="pmimg" src="" alt="">
+  <span class="pmtxt" id="pmtxt">Matching photo against catalog images&#8230;</span>
+  <button class="pmclr" onclick="clearPhotoMatch()">&#10005; Clear Photo Search</button>
 </div>
 <div class="sts">
   <div class="sc"><div class="sv" id="si">-</div><div class="sl">Line Items</div></div>
@@ -274,10 +291,11 @@ window.onerror=function(msg,src,line,col,err){var d=document.createElement('div'
 <script>
 var _ERR=null;
 try{
-var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21;
+var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21,PH=22;
 var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
 var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:13,a:false},filtered=[],page=0;
+var photoMatchActive=false,photoMatchDistByHash=null,photoMatchHasClose=false,PM_MAX_DIST=20;
 var dark=localStorage.getItem('t10b')!=='light';
 var RM_MGRS={},MGR_RM={},MGR_TECHS={};
 R.tech_rows.forEach(function(t){
@@ -353,6 +371,11 @@ function af(){
     if(F.rep&&p[RE]!==F.rep)return false;
     if(F.img&&!(p[IMG]||getManualImg(p[PN])))return false;
     if(F.noimg&&(p[IMG]||getManualImg(p[PN])))return false;
+    if(photoMatchActive){
+      var ph=p[PH];
+      if(!ph||!(ph in photoMatchDistByHash))return false;
+      if(photoMatchDistByHash[ph]>PM_MAX_DIST)return false;
+    }
     if(q){
       var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[FD]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
       var words=q.split(' ');
@@ -370,11 +393,15 @@ function af(){
   // we no longer display/sort-by), so that "skip re-sort when already in
   // natural order" shortcut no longer applies to any remaining column --
   // always sort explicitly now.
-  filtered.sort(function(a,b){
-    var va=a[SRT.c],vb=b[SRT.c];
-    if(typeof va==='number')return SRT.a?va-vb:vb-va;
-    return SRT.a?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));
-  });
+  if(photoMatchActive){
+    filtered.sort(function(a,b){return photoMatchDistByHash[a[PH]]-photoMatchDistByHash[b[PH]];});
+  }else{
+    filtered.sort(function(a,b){
+      var va=a[SRT.c],vb=b[SRT.c];
+      if(typeof va==='number')return SRT.a?va-vb:vb-va;
+      return SRT.a?String(va).localeCompare(String(vb)):String(vb).localeCompare(String(va));
+    });
+  }
   page=0;rP();uS();bP();bSB();
 }
 
@@ -541,6 +568,112 @@ function toggleNoImgF(){F.noimg=!F.noimg;if(F.noimg){F.img=false;ge('imgf').clas
 function openLb(src,alt){ge('lbimg').src=src;ge('lbimg').alt=alt||'';ge('lbov').classList.remove('hid');}
 function closeLb(){ge('lbov').classList.add('hid');ge('lbimg').src='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb();});
+
+// -- SEARCH BY PHOTO (client-side perceptual-hash visual match, no server) --
+// Computes the same 9x9 dHash algorithm used at build time (see
+// sdi_scraper/compute_phash_cache.py) on the user's photo via canvas, then
+// ranks every catalog part with a precomputed hash by Hamming distance.
+var PM_HASH_SIZE=9;
+
+function computeDHashFromImage(img){
+  var w=PM_HASH_SIZE+1,h=PM_HASH_SIZE;
+  var cv=document.createElement('canvas');cv.width=w;cv.height=h;
+  var ctx=cv.getContext('2d');
+  ctx.drawImage(img,0,0,w,h);
+  var data=ctx.getImageData(0,0,w,h).data;
+  var gray=[];
+  for(var i=0;i<data.length;i+=4){
+    gray.push(0.299*data[i]+0.587*data[i+1]+0.114*data[i+2]);
+  }
+  var bits=[];
+  for(var row=0;row<h;row++){
+    var rowStart=row*w;
+    for(var col=0;col<PM_HASH_SIZE;col++){
+      bits.push(gray[rowStart+col]>gray[rowStart+col+1]?1:0);
+    }
+  }
+  var val=0n;
+  for(var b=0;b<bits.length;b++){
+    val=(val<<1n)|BigInt(bits[b]);
+  }
+  var nbits=PM_HASH_SIZE*PM_HASH_SIZE;
+  var hexLen=Math.ceil(nbits/4);
+  return val.toString(16).padStart(hexLen,'0');
+}
+
+function hammingDistHex(hexA,hexB){
+  if(!hexA||!hexB)return 999;
+  if(hexA.length!==hexB.length)return 999;
+  var a=BigInt('0x'+hexA),b=BigInt('0x'+hexB);
+  var x=a^b,count=0;
+  while(x>0n){count+=Number(x&1n);x>>=1n;}
+  return count;
+}
+
+function onPhotoPick(evt){
+  var file=evt.target.files&&evt.target.files[0];
+  if(!file)return;
+  var camBtn=ge('camBtn');
+  camBtn.classList.add('busy');
+  var reader=new FileReader();
+  reader.onload=function(){
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var uploadedHash=computeDHashFromImage(img);
+        runPhotoMatch(uploadedHash,reader.result);
+      }catch(e){
+        alert('Could not analyze that photo, please try another one.');
+      }finally{
+        camBtn.classList.remove('busy');
+      }
+    };
+    img.onerror=function(){
+      camBtn.classList.remove('busy');
+      alert('Could not load that photo, please try another one.');
+    };
+    img.src=reader.result;
+  };
+  reader.onerror=function(){
+    camBtn.classList.remove('busy');
+    alert('Could not read that photo, please try another one.');
+  };
+  reader.readAsDataURL(file);
+  evt.target.value='';
+}
+
+function runPhotoMatch(uploadedHash,previewDataUrl){
+  var distByHash={};
+  var bestDist=999;
+  R.parts.forEach(function(p){
+    var ph=p[PH];
+    if(!ph)return;
+    if(!(ph in distByHash)){
+      var d=hammingDistHex(uploadedHash,ph);
+      distByHash[ph]=d;
+      if(d<bestDist)bestDist=d;
+    }
+  });
+  photoMatchActive=true;
+  photoMatchDistByHash=distByHash;
+  ge('pmimg').src=previewDataUrl;
+  ge('pmbar').classList.add('on');
+  var pmtxt=ge('pmtxt');
+  if(bestDist<=PM_MAX_DIST){
+    pmtxt.textContent='Showing closest catalog-photo matches (best match distance: '+bestDist+' of 81 bits)';
+  }else{
+    pmtxt.textContent='No close visual matches found in the catalog for this photo. Try a clearer, well-lit, close-up shot of just the part.';
+  }
+  af();
+}
+
+function clearPhotoMatch(){
+  photoMatchActive=false;
+  photoMatchDistByHash=null;
+  ge('pmbar').classList.remove('on');
+  ge('pmimg').src='';
+  af();
+}
 
 // -- MANUAL IMAGE OVERRIDES (localStorage, this browser only until exported) --
 var MANUAL_IMG_KEY='10b_manual_images_v1';

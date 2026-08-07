@@ -378,7 +378,11 @@ def build_inventory_portal():
             '</g></svg>')
         html = html.replace(
             _mgr_share_btn,
-            f'<a href="index.html?v={int(time.time())}" class="nbtn" style="text-decoration:none">{_mgr_home_svg} Home</a>'
+            f'<a href="index.html?v={int(time.time())}" title="Home" '
+            'style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;'
+            'background:#6d28d9;border:1px solid rgba(255,255,255,.25);border-radius:6px;'
+            'padding:6px 12px;font-size:.72rem;color:#fff;font-family:inherit;white-space:nowrap">'
+            f'{_mgr_home_svg} Home</a>'
             f'<a href="10b-inventory.html?v={int(time.time())}" class="nbtn" style="text-decoration:none">&#128269; Global Search</a>'
             + _mgr_share_btn
         )
@@ -538,7 +542,11 @@ window.onerror = function(message, source, lineno, colno, error) {{
         '</g></svg>')
     global_html = global_html.replace(
         _share_btn_html,
-        f'<a href="index.html?v={int(time.time())}" class="btn" style="text-decoration:none">{_home_btn_svg} Home</a>'
+        f'<a href="index.html?v={int(time.time())}" title="Home" '
+        'style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;'
+        'background:#6d28d9;border:1px solid rgba(255,255,255,.25);border-radius:6px;'
+        'padding:6px 12px;font-size:.72rem;color:#fff;font-family:inherit;white-space:nowrap">'
+        f'{_home_btn_svg} Home</a>'
         + _share_btn_html
     )
     

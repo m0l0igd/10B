@@ -368,20 +368,18 @@ def build_inventory_portal():
             '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
             '</svg> Share</button>')
         _mgr_home_svg = ('<svg width="18" height="18" viewBox="0 0 24 24">'
+            '<circle cx="12" cy="12" r="11" fill="#0071ce"/>'
             '<g fill="#ffc220">'
-            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z"/>'
-            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(60 12 12)"/>'
-            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(120 12 12)"/>'
-            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(180 12 12)"/>'
-            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(240 12 12)"/>'
-            '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(300 12 12)"/>'
+            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z"/>'
+            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(60 12 12)"/>'
+            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(120 12 12)"/>'
+            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(180 12 12)"/>'
+            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(240 12 12)"/>'
+            '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(300 12 12)"/>'
             '</g></svg>')
         html = html.replace(
             _mgr_share_btn,
-            f'<a href="index.html?v={int(time.time())}" title="Home" '
-            'style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;'
-            'background:#6d28d9;border:1px solid rgba(255,255,255,.25);border-radius:6px;'
-            'padding:6px 12px;font-size:.72rem;color:#fff;font-family:inherit;white-space:nowrap">'
+            f'<a href="index.html?v={int(time.time())}" title="Home" class="nbtn" style="text-decoration:none">'
             f'{_mgr_home_svg} Home</a>'
             f'<a href="10b-inventory.html?v={int(time.time())}" class="nbtn" style="text-decoration:none">&#128269; Global Search</a>'
             + _mgr_share_btn
@@ -532,20 +530,18 @@ window.onerror = function(message, source, lineno, colno, error) {{
         '<path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/>'
         '</svg> Share</button>')
     _home_btn_svg = ('<svg width="18" height="18" viewBox="0 0 24 24">'
+        '<circle cx="12" cy="12" r="11" fill="#0071ce"/>'
         '<g fill="#ffc220">'
-        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z"/>'
-        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(60 12 12)"/>'
-        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(120 12 12)"/>'
-        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(180 12 12)"/>'
-        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(240 12 12)"/>'
-        '<path d="M12,12 C10.3,9.3 9.8,5.6 12,2 C14.2,5.6 13.7,9.3 12,12 Z" transform="rotate(300 12 12)"/>'
+        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z"/>'
+        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(60 12 12)"/>'
+        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(120 12 12)"/>'
+        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(180 12 12)"/>'
+        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(240 12 12)"/>'
+        '<path d="M12,12 C10.6,9.9 10.2,7 12,4 C13.8,7 13.4,9.9 12,12 Z" transform="rotate(300 12 12)"/>'
         '</g></svg>')
     global_html = global_html.replace(
         _share_btn_html,
-        f'<a href="index.html?v={int(time.time())}" title="Home" '
-        'style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;'
-        'background:#6d28d9;border:1px solid rgba(255,255,255,.25);border-radius:6px;'
-        'padding:6px 12px;font-size:.72rem;color:#fff;font-family:inherit;white-space:nowrap">'
+        f'<a href="index.html?v={int(time.time())}" title="Home" class="btn" style="text-decoration:none">'
         f'{_home_btn_svg} Home</a>'
         + _share_btn_html
     )

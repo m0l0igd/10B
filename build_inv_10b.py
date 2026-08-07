@@ -80,6 +80,11 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .hsel:hover{border-color:#fff}
 .hsel:focus{outline:none;border-color:#fff;box-shadow:0 0 0 2px rgba(255,194,32,.35)}
 .hsel option{background:var(--wmt2);color:#fff}
+.nfl{font-size:.68rem;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;margin-left:4px}
+.npl{background:var(--wmt2);border:1.5px solid var(--gold);border-radius:20px;padding:5px 13px;font-size:.7rem;font-weight:600;color:#fff;cursor:pointer;font-family:inherit;white-space:nowrap}
+.npl:hover{border-color:#fff}
+.npl.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.ndv{width:1px;height:20px;background:rgba(255,255,255,.3);flex-shrink:0;margin:0 2px}
 @media(max-width:960px){.hsel{min-width:90px;max-width:110px;font-size:.66rem;padding:5px 22px 5px 10px}}
 .fb{background:var(--s1);border-bottom:1px solid var(--bd);padding:7px 20px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 .fl{font-size:.67rem;color:var(--sub);font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
@@ -183,24 +188,24 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <div class="hc"><select class="hsel" id="rmSel" onchange="sRM(this.value)"></select></div>
   <div class="hc"><select class="hsel" id="mgrSel" onchange="sMGR(this.value)"></select></div>
   <div class="hc"><select class="hsel" id="techSel" onchange="sTechSel(this.value)"></select></div>
+  <div class="ndv"></div>
+  <span class="nfl">Role:</span>
+  <button class="npl on" data-g="role" data-v="" onclick="sF('role','',this)">All</button>
+  <button class="npl" data-g="role" data-v="GM" onclick="sF('role','GM',this)">GM</button>
+  <button class="npl" data-g="role" data-v="HVACR" onclick="sF('role','HVACR',this)">HVACR</button>
+  <button class="npl" data-g="role" data-v="FE" onclick="sF('role','FE',this)">FE</button>
+  <button class="npl" data-g="role" data-v="Store" onclick="sF('role','Store',this)">Store</button>
+  <div class="ndv"></div>
+  <span class="nfl">Rep:</span>
+  <button class="npl on" data-g="rep" data-v="" onclick="sF('rep','',this)">All</button>
+  <button class="npl" data-g="rep" data-v="Y" onclick="sF('rep','Y',this)">&#10003; Yes</button>
+  <button class="npl" data-g="rep" data-v="N" onclick="sF('rep','N',this)">No</button>
   <div class="nr2">
     <button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
     <button class="btn" onclick="togT()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
   </div>
 </div></nav>
 <div class="fb">
-  <span class="fl">Role:</span>
-  <button class="pl on" data-g="role" data-v="" onclick="sF('role','',this)">All</button>
-  <button class="pl" data-g="role" data-v="GM" onclick="sF('role','GM',this)">GM</button>
-  <button class="pl" data-g="role" data-v="HVACR" onclick="sF('role','HVACR',this)">HVACR</button>
-  <button class="pl" data-g="role" data-v="FE" onclick="sF('role','FE',this)">FE</button>
-  <button class="pl" data-g="role" data-v="Store" onclick="sF('role','Store',this)">Store</button>
-  <div class="dv"></div>
-  <span class="fl">Rep:</span>
-  <button class="pl on" data-g="rep" data-v="" onclick="sF('rep','',this)">All</button>
-  <button class="pl g" data-g="rep" data-v="Y" onclick="sF('rep','Y',this)">&#10003; Yes</button>
-  <button class="pl" data-g="rep" data-v="N" onclick="sF('rep','N',this)">No</button>
-  <div class="dv"></div>
   <button class="pl gold" id="imgf" onclick="toggleImgF()">Has Image</button>
   <button class="pl r" id="noimgf" onclick="toggleNoImgF()" title="Show only parts that still need a photo">No Image</button>
   <div class="dv"></div><span id="fc"></span>
@@ -528,7 +533,7 @@ function toggleSB(){
 function sRM(v){F.rm=v;F.mgr='';F.tech='';af();}
 function sMGR(v){F.mgr=v;F.tech='';if(v)F.rm=MGR_RM[v]||F.rm;af();}
 function sTech(t,m){if(F.tech===t&&F.mgr===m){F.tech='';F.mgr='';}else{F.tech=t;F.mgr=m;F.rm=MGR_RM[m]||'';}af();}
-function sF(g,v,btn){F[g]=v;document.querySelectorAll('.pl[data-g="'+g+'"]').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');af();}
+function sF(g,v,btn){F[g]=v;document.querySelectorAll('.pl[data-g="'+g+'"],.npl[data-g="'+g+'"]').forEach(function(b){b.classList.remove('on');});btn.classList.add('on');af();}
 function toggleImgF(){F.img=!F.img;if(F.img){F.noimg=false;ge('noimgf').classList.remove('on');}ge('imgf').classList.toggle('on',F.img);af();}
 function toggleNoImgF(){F.noimg=!F.noimg;if(F.noimg){F.img=false;ge('imgf').classList.remove('on');}ge('noimgf').classList.toggle('on',F.noimg);af();}
 function openLb(src,alt){ge('lbimg').src=src;ge('lbimg').alt=alt||'';ge('lbov').classList.remove('hid');}

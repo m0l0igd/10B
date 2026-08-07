@@ -32,6 +32,8 @@ MANUAL_OVERRIDES_FILE = HERE / "manual_overrides.json"
 HASH_SIZE = 9
 
 # Must stay byte-identical to computeDHashFromImage() in build_inv_10b.py
+# (including the center-crop-to-square step -- otherwise catalog hashes
+# and user-photo hashes drift apart just from aspect-ratio differences).
 JS_HASH_FN = """
 () => {
   window.__dhash = function(img) {
@@ -39,7 +41,10 @@ JS_HASH_FN = """
     const w = PM_HASH_SIZE + 1, h = PM_HASH_SIZE;
     const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
     const ctx = cv.getContext('2d');
-    ctx.drawImage(img, 0, 0, w, h);
+    const sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
+    const side = Math.min(sw, sh);
+    const sx = (sw - side) / 2, sy = (sh - side) / 2;
+    ctx.drawImage(img, sx, sy, side, side, 0, 0, w, h);
     const data = ctx.getImageData(0, 0, w, h).data;
     const gray = [];
     for (let i = 0; i < data.length; i += 4) {

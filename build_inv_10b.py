@@ -189,26 +189,21 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <div class="hc"><select class="hsel" id="mgrSel" onchange="sMGR(this.value)"></select></div>
   <div class="hc"><select class="hsel" id="techSel" onchange="sTechSel(this.value)"></select></div>
   <div class="ndv"></div>
-  <span class="nfl">Role:</span>
-  <button class="npl on" data-g="role" data-v="" onclick="sF('role','',this)">All</button>
-  <button class="npl" data-g="role" data-v="GM" onclick="sF('role','GM',this)">GM</button>
-  <button class="npl" data-g="role" data-v="HVACR" onclick="sF('role','HVACR',this)">HVACR</button>
-  <button class="npl" data-g="role" data-v="FE" onclick="sF('role','FE',this)">FE</button>
-  <button class="npl" data-g="role" data-v="Store" onclick="sF('role','Store',this)">Store</button>
+  <div class="hc"><select class="hsel" id="roleSel" onchange="sRole(this.value)"></select></div>
   <div class="ndv"></div>
   <span class="nfl">Rep:</span>
   <button class="npl on" data-g="rep" data-v="" onclick="sF('rep','',this)">All</button>
   <button class="npl" data-g="rep" data-v="Y" onclick="sF('rep','Y',this)">&#10003; Yes</button>
   <button class="npl" data-g="rep" data-v="N" onclick="sF('rep','N',this)">No</button>
-  <div class="nr2">
-    <button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
-    <button class="btn" onclick="togT()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
-  </div>
 </div></nav>
 <div class="fb">
   <button class="pl gold" id="imgf" onclick="toggleImgF()">Has Image</button>
   <button class="pl r" id="noimgf" onclick="toggleNoImgF()" title="Show only parts that still need a photo">No Image</button>
   <div class="dv"></div><span id="fc"></span>
+  <div class="nr2" style="margin-left:auto">
+    <button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
+    <button class="btn" onclick="togT()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
+  </div>
 </div>
 <div class="sts">
   <div class="sc"><div class="sv" id="si">-</div><div class="sl">Line Items</div></div>
@@ -462,7 +457,14 @@ function bP(){
   vt.forEach(function(t){th+='<option value="'+esc(t)+'"'+(F.tech===t?' selected':'')+'>'+esc(t)+'</option>';});
   ge('techSel').innerHTML=th;
   ge('techSel').value=F.tech||'';
+
+  var oh='<option value="">ROLE</option>';
+  ['GM','HVACR','FE','Store'].forEach(function(r){oh+='<option value="'+r+'"'+(F.role===r?' selected':'')+'>'+r+'</option>';});
+  ge('roleSel').innerHTML=oh;
+  ge('roleSel').value=F.role||'';
 }
+
+function sRole(v){F.role=v;af();}
 
 function sTechSel(t){
   if(!t){F.tech='';af();return;}

@@ -164,6 +164,58 @@ def load_enriched_parts():
     except Exception:
         return {}
 
+
+import re as _re
+
+def load_enriched_by_item_id():
+    """Returns {WALMART_ITEM_ID: image_url} -- a FALLBACK join key for when
+    the live BigQuery row has no usable item_manufacturer_part_no to match
+    against enriched_parts.json by part number.
+
+    URGENT FIX: the upstream BigQuery table
+    (semantic_fs_zeus_parts_inventory) started returning a NULL/blank
+    item_manufacturer_part_no for the vast majority of rows (confirmed
+    84% of rows table-WIDE, across every region, not just 10B -- a
+    upstream data quality issue outside our control). This made "Search
+    by Photo" / "Has Image" coverage crater from ~2,597 to 658 matches,
+    even though the underlying scraped photo data on disk was completely
+    unchanged and intact.
+
+    However: every one of those NULL-part-number rows STILL has a valid
+    item_id (Walmart's own internal item identifier, format "W#########"),
+    confirmed via direct BigQuery query (0 rows have a missing item_id).
+    And it turns out enriched_parts.json's "detail_url" field already
+    embeds this exact same Walmart item_id for every part that was
+    originally looked up via SDI Zeus's Walmart-specific catalog (e.g.
+    "...itemdetailnew?ItemId=W01933738&ManufacturePartNumber=943-0214-00...").
+
+    So instead of re-scraping anything, we can recover a large chunk of
+    "lost" image matches for FREE by extracting that item_id from the
+    already-scraped detail_url and using it as a second, fallback join key
+    whenever the live row's part number comes back empty. Confirmed via
+    direct testing: recovers 451 of the 2,303 distinct item_ids that lost
+    their part number in the current (broken) BigQuery snapshot -- not a
+    full fix for the upstream data problem, but a real, immediate,
+    zero-cost recovery of otherwise-orphaned image matches.
+    """
+    try:
+        with open(ENRICHED_PARTS_FILE, encoding="utf-8") as f:
+            rows = json.load(f)
+        result = {}
+        for r in rows:
+            url = r.get("detail_url") or ""
+            m = _re.search(r"ItemId=([A-Za-z0-9-]+)", url)
+            if not m:
+                continue
+            img = r.get("image_url") or ""
+            if img.startswith("/Images/"):
+                img = ""
+            if img:
+                result[m.group(1).upper()] = img
+        return result
+    except Exception:
+        return {}
+
 # ---------------------------------------------------------------------------
 # Hierarchy & Mapping Config
 # ---------------------------------------------------------------------------
@@ -303,6 +355,8 @@ def build_inventory_portal():
     # STEP 2 - Parse and Clean Technicians/Managers
     enriched = load_enriched_parts()
     print(f"Loaded {len(enriched)} ZEUS-enriched parts (images/descriptions) for merge...")
+    enriched_by_item_id = load_enriched_by_item_id()
+    print(f"Loaded {len(enriched_by_item_id)} ZEUS-enriched parts indexed by Walmart item_id (fallback join for rows missing a part number)...")
     manual_imgs = load_manual_overrides()
     print(f"Loaded {len(manual_imgs)} manually-submitted images for merge...")
     embeddings_cache = load_embeddings_cache()
@@ -362,7 +416,21 @@ def build_inventory_portal():
         if tc <= 0:
             continue
 
-        _img = manual_imgs.get((r.item_manufacturer_part_no or '').upper()) or (enriched.get((r.item_manufacturer_part_no or '').upper()) or {}).get("image_url") or ''
+        # BUG WORKAROUND (upstream data issue, not ours -- see
+        # load_enriched_by_item_id()'s docstring): the live BigQuery table
+        # is currently returning a NULL/blank item_manufacturer_part_no for
+        # ~84% of rows table-wide. When that happens, fall back to matching
+        # on Walmart's own item_id (always present, confirmed via direct
+        # query) against the item_id embedded in enriched_parts.json's
+        # scraped detail_url -- recovers image matches that would otherwise
+        # be silently lost purely because the part-number join key vanished.
+        _pno_upper = (r.item_manufacturer_part_no or '').upper()
+        _img = (
+            manual_imgs.get(_pno_upper)
+            or (enriched.get(_pno_upper) or {}).get("image_url")
+            or enriched_by_item_id.get((r.item_id or '').upper())
+            or ''
+        )
 
         parts.append({
             "sub":  sub,

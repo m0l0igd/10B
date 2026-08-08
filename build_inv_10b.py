@@ -784,14 +784,55 @@ function pmAutoCropToSubject(img){
 // crop for a couple seconds guarantees the model always sees the actual
 // part. pmAutoCropToSubject() is kept only as an initial best-guess
 // starting position for that crop box, never as the final answer.
+// Computes the average RGB color of a cropped region, using a small
+// 64x64 downscale for speed (same approach as
+// sdi_scraper/compute_avg_colors.py's server-side twin -- MUST stay in
+// sync so query-side and catalog-side colors are directly comparable).
+//
+// WHY THIS EXISTS: MobileNetV2's shape/texture embedding is only weakly
+// sensitive to raw color -- a black plastic part and a similarly-shaped
+// copper/tan part can end up with a fairly close embedding purely from
+// outline/texture similarity. Reported directly by a user: a photo of a
+// copper pipe elbow returned black plastic parts and electrical breakers
+// as top matches, an obviously-wrong result a human would never make,
+// specifically because color wasn't being weighted at all. Blending in an
+// explicit color-similarity signal (see pmColorSim below) lets a shape
+// match with wildly different average color get penalized instead of
+// dominating the ranking purely on shape.
+function pmAvgColor(img,box){
+  var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
+  var sx,sy,sww,shh;
+  if(box){sx=box.sx;sy=box.sy;sww=box.sw;shh=box.sh;}
+  else{var side=Math.min(sw,sh);sx=(sw-side)/2;sy=(sh-side)/2;sww=side;shh=side;}
+  var cv=document.createElement('canvas');cv.width=64;cv.height=64;
+  var ctx=cv.getContext('2d');
+  ctx.drawImage(img,sx,sy,sww,shh,0,0,64,64);
+  var data=ctx.getImageData(0,0,64,64).data;
+  var r=0,g=0,b=0,n=0;
+  for(var i=0;i<data.length;i+=4){r+=data[i];g+=data[i+1];b+=data[i+2];n++;}
+  return [Math.round(r/n),Math.round(g/n),Math.round(b/n)];
+}
+
+// Color similarity in [0,1], 1 = identical average color. Uses Euclidean
+// RGB distance normalized against the maximum possible distance
+// (black-to-white diagonal, ~441.7), same simple/cheap approach used
+// elsewhere in this file for corner-agreement checks.
+function pmColorSim(c1,c2){
+  if(!c1||!c2)return 0.5; // unknown color -- neutral, don't penalize or boost
+  var d=Math.sqrt(Math.pow(c1[0]-c2[0],2)+Math.pow(c1[1]-c2[1],2)+Math.pow(c1[2]-c2[2],2));
+  return Math.max(0,1-d/195); // ~195 chosen so "clearly different colors" (e.g. copper-orange vs. black/gray) scores near 0, not just extreme black/white opposites
+}
+
 function pmEmbedImage(img,box){
   var cv=document.createElement('canvas');cv.width=224;cv.height=224;
   var ctx=cv.getContext('2d');
-  if(box){
-    ctx.drawImage(img,box.sx,box.sy,box.sw,box.sh,0,0,224,224);
+  var usedBox=box;
+  if(usedBox){
+    ctx.drawImage(img,usedBox.sx,usedBox.sy,usedBox.sw,usedBox.sh,0,0,224,224);
   }else{
     var autoBox=pmAutoCropToSubject(img);
     if(autoBox){
+      usedBox=autoBox;
       ctx.drawImage(img,autoBox.sx,autoBox.sy,autoBox.sw,autoBox.sh,0,0,224,224);
     }else{
       var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
@@ -802,7 +843,8 @@ function pmEmbedImage(img,box){
   var t=PM_MOBILENET_MODEL.infer(cv,true); // true = return 1280-d embedding, not classification
   var arr=Array.from(t.dataSync());
   t.dispose();
-  return arr;
+  var avgColor=pmAvgColor(img,usedBox);
+  return {vec:arr,color:avgColor};
 }
 
 function pmCosineSimQuantized(queryVec,q,scale){
@@ -916,8 +958,8 @@ function cropConfirm(){
   pmEnsureModelAndData(function(msg){ge('pmtxt').textContent=msg;})
     .then(function(){
       ge('pmtxt').textContent='Analyzing cropped photo...';
-      var queryVec=pmEmbedImage(img,box);
-      runPhotoMatch(queryVec,croppedPreviewUrl);
+      var queryEmbed=pmEmbedImage(img,box);
+      runPhotoMatch(queryEmbed,croppedPreviewUrl);
     })
     .catch(function(e){
       console.error(e);
@@ -1015,14 +1057,30 @@ function cropConfirm(){
   }
 })();
 
-function runPhotoMatch(queryVec,previewDataUrl){
+// queryEmbed: {vec: [1280 floats], color: [r,g,b]} from pmEmbedImage().
+function runPhotoMatch(queryEmbed,previewDataUrl){
+  var queryVec=queryEmbed.vec,queryColor=queryEmbed.color;
   var simByPno={};
   var bestSim=-1;
+  // Blend shape/texture similarity (from MobileNet, the dominant signal
+  // for genuinely distinguishing different part shapes) with an explicit
+  // color-similarity signal computed from each catalog part's precomputed
+  // average color (see pmColorSim's comment for why this exists -- shape
+  // embeddings alone can't reliably tell a copper elbow apart from a
+  // similarly-shaped black plastic part, since color barely factors into
+  // that feature space). Weighted so shape still dominates (parts that
+  // truly look nothing alike shouldn't rank highly just for sharing a
+  // color), but a strong color mismatch meaningfully demotes an
+  // otherwise-plausible shape match, and a color match gives a modest
+  // boost among genuinely similar-shaped candidates.
+  var COLOR_WEIGHT=0.25,SHAPE_WEIGHT=0.75;
   for(var pno in PM_CATALOG_EMBEDDINGS){
     var entry=PM_CATALOG_EMBEDDINGS[pno];
-    var sim=pmCosineSimQuantized(queryVec,entry.q,entry.s);
-    simByPno[pno]=sim;
-    if(sim>bestSim)bestSim=sim;
+    var shapeSim=pmCosineSimQuantized(queryVec,entry.q,entry.s);
+    var colorSim=(queryColor&&entry.c)?pmColorSim(queryColor,entry.c):0.5;
+    var combinedSim=SHAPE_WEIGHT*shapeSim+COLOR_WEIGHT*colorSim;
+    simByPno[pno]=combinedSim;
+    if(combinedSim>bestSim)bestSim=combinedSim;
   }
   photoMatchActive=true;
   photoMatchSimByPno=simByPno;

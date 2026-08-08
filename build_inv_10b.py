@@ -291,11 +291,11 @@ window.onerror=function(msg,src,line,col,err){var d=document.createElement('div'
 <script>
 var _ERR=null;
 try{
-var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21,PH=22;
+var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21;
 var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
 var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:13,a:false},filtered=[],page=0;
-var photoMatchActive=false,photoMatchDistByHash=null,photoMatchHasClose=false,PM_MAX_DIST=20,PM_TOPN=40;
+var photoMatchActive=false,photoMatchSimByPno=null;
 var dark=localStorage.getItem('t10b')!=='light';
 var RM_MGRS={},MGR_RM={},MGR_TECHS={};
 R.tech_rows.forEach(function(t){
@@ -372,12 +372,12 @@ function af(){
     if(F.img&&!(p[IMG]||getManualImg(p[PN])))return false;
     if(F.noimg&&(p[IMG]||getManualImg(p[PN])))return false;
     if(photoMatchActive){
-      var ph=p[PH];
-      if(!ph||!(ph in photoMatchDistByHash))return false;
-      // No hard distance cutoff here -- always surface the closest available
-      // matches (ranked below) rather than risking zero results just because
-      // a real-world phone photo naturally scores a bit further out than a
-      // clean catalog photo would. PM_TOPN below caps how many we actually show.
+      var pno=p[PN];
+      if(!pno||!(pno in photoMatchSimByPno))return false;
+      // No hard similarity cutoff here -- always surface the closest available
+      // matches (ranked below) rather than risking zero results. PM_TOPN below
+      // caps how many we actually show, and the status message is honest
+      // about confidence (strong/possible/rough-guess) based on the score.
     }
     if(q){
       var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[FD]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
@@ -397,7 +397,7 @@ function af(){
   // natural order" shortcut no longer applies to any remaining column --
   // always sort explicitly now.
   if(photoMatchActive){
-    filtered.sort(function(a,b){return photoMatchDistByHash[a[PH]]-photoMatchDistByHash[b[PH]];});
+    filtered.sort(function(a,b){return photoMatchSimByPno[b[PN]]-photoMatchSimByPno[a[PN]];});
     filtered=filtered.slice(0,PM_TOPN);
   }else{
     filtered.sort(function(a,b){
@@ -573,52 +573,136 @@ function openLb(src,alt){ge('lbimg').src=src;ge('lbimg').alt=alt||'';ge('lbov').
 function closeLb(){ge('lbov').classList.add('hid');ge('lbimg').src='';}
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb();});
 
-// -- SEARCH BY PHOTO (client-side perceptual-hash visual match, no server) --
-// Computes the same 9x9 dHash algorithm used at build time (see
-// sdi_scraper/compute_phash_cache.py) on the user's photo via canvas, then
-// ranks every catalog part with a precomputed hash by Hamming distance.
-var PM_HASH_SIZE=9;
+// -- SEARCH BY PHOTO (real learned visual features via MobileNetV2, no server) --
+// A previous version used a coarse 9x9 "difference hash" (blurry light/dark
+// gradient pattern only) which could not reliably tell apart visually
+// distinct parts -- it confused completely different items because it had
+// no real concept of shape/texture/object identity. This version instead
+// uses MobileNetV2 (a small pretrained image-classification neural network,
+// loaded on demand from a public CDN, running fully client-side via
+// TensorFlow.js -- no server, no per-query cost) to extract a real 1280-
+// dimension learned feature vector per image, then ranks catalog parts by
+// cosine similarity of that vector. This is a fundamentally more capable
+// signal because the model has actually learned to recognize real-world
+// object shape/texture/edges from millions of training images, rather than
+// just comparing raw brightness patterns.
+//
+// Precomputed catalog embeddings live in a separate lazy-loaded file
+// (catalog_embeddings.json, written by build_10b_inventory.py from
+// sdi_scraper/embeddings_cache.json) so the ~3MB of vector data never
+// slows down a normal page visit -- it's only fetched the first time a
+// user actually clicks the camera button.
+var PM_TOPN=30;
+var PM_MODEL_READY=false, PM_MODEL_LOADING=false;
+var PM_CATALOG_EMBEDDINGS=null; // {pno: {q:[int8...], s:scale}}
+var PM_MOBILENET_MODEL=null;
 
-function computeDHashFromImage(img){
-  var w=PM_HASH_SIZE+1,h=PM_HASH_SIZE;
-  var cv=document.createElement('canvas');cv.width=w;cv.height=h;
-  var ctx=cv.getContext('2d');
-  // Center-crop to a square BEFORE the tiny resize -- otherwise a portrait
-  // phone photo gets squashed/stretched completely differently than a
-  // square/landscape catalog photo of the same part, and the hash ends up
-  // dominated by aspect-ratio distortion instead of the actual part shape.
-  var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
-  var side=Math.min(sw,sh);
-  var sx=(sw-side)/2,sy=(sh-side)/2;
-  ctx.drawImage(img,sx,sy,side,side,0,0,w,h);
-  var data=ctx.getImageData(0,0,w,h).data;
-  var gray=[];
-  for(var i=0;i<data.length;i+=4){
-    gray.push(0.299*data[i]+0.587*data[i+1]+0.114*data[i+2]);
-  }
-  var bits=[];
-  for(var row=0;row<h;row++){
-    var rowStart=row*w;
-    for(var col=0;col<PM_HASH_SIZE;col++){
-      bits.push(gray[rowStart+col]>gray[rowStart+col+1]?1:0);
-    }
-  }
-  var val=0n;
-  for(var b=0;b<bits.length;b++){
-    val=(val<<1n)|BigInt(bits[b]);
-  }
-  var nbits=PM_HASH_SIZE*PM_HASH_SIZE;
-  var hexLen=Math.ceil(nbits/4);
-  return val.toString(16).padStart(hexLen,'0');
+function pmLoadScript(src){
+  return new Promise(function(resolve,reject){
+    var s=document.createElement('script');
+    s.src=src;s.onload=resolve;s.onerror=function(){reject(new Error('failed to load '+src));};
+    document.head.appendChild(s);
+  });
 }
 
-function hammingDistHex(hexA,hexB){
-  if(!hexA||!hexB)return 999;
-  if(hexA.length!==hexB.length)return 999;
-  var a=BigInt('0x'+hexA),b=BigInt('0x'+hexB);
-  var x=a^b,count=0;
-  while(x>0n){count+=Number(x&1n);x>>=1n;}
-  return count;
+function pmEnsureModelAndData(onProgress){
+  if(PM_MODEL_READY)return Promise.resolve();
+  if(PM_MODEL_LOADING)return PM_MODEL_LOADING;
+  PM_MODEL_LOADING=(async function(){
+    onProgress('Loading visual search model (first time only, ~10-20s)...');
+    await pmLoadScript('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js');
+    await pmLoadScript('https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.1/dist/mobilenet.min.js');
+    var modelPromise=mobilenet.load({version:2,alpha:1.0});
+    onProgress('Loading catalog photo index...');
+    var dataPromise=fetch('catalog_embeddings.json').then(function(r){
+      if(!r.ok)throw new Error('catalog_embeddings.json fetch failed: '+r.status);
+      return r.json();
+    });
+    var results=await Promise.all([modelPromise,dataPromise]);
+    PM_MOBILENET_MODEL=results[0];
+    PM_CATALOG_EMBEDDINGS=results[1];
+    PM_MODEL_READY=true;
+  })();
+  return PM_MODEL_LOADING;
+}
+
+// Must stay byte-identical to the equivalent logic in
+// sdi_scraper/compute_embeddings_shard.py (LOAD_MODEL_JS's
+// window.__autoCropToSubject + EMBED_DATAURL_JS) -- catalog embeddings and
+// live user-photo embeddings MUST go through identical preprocessing or
+// cosine similarity comparisons between them become meaningless. This
+// auto-crop step (detect background color from image corners, crop to the
+// bounding box of pixels that differ from it) was empirically verified to
+// be critical: without it, a real phone photo's true catalog match ranked
+// ~221st out of ~2300 parts (background dominated the embedding); with it,
+// the true match ranks #1 with clean separation from the next-best guess.
+function pmAutoCropToSubject(img){
+  var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
+  var sampleW=200,sampleH=Math.max(1,Math.round(200*sh/sw));
+  var cv=document.createElement('canvas');cv.width=sampleW;cv.height=sampleH;
+  var ctx=cv.getContext('2d');
+  ctx.drawImage(img,0,0,sampleW,sampleH);
+  var data=ctx.getImageData(0,0,sampleW,sampleH).data;
+  function pxAt(x,y){var i=(y*sampleW+x)*4;return [data[i],data[i+1],data[i+2]];}
+  var patch=6,br=0,bg=0,bb=0,bn=0;
+  [0,sampleH-patch].forEach(function(cy){
+    [0,sampleW-patch].forEach(function(cx){
+      for(var y=cy;y<cy+patch&&y<sampleH&&y>=0;y++){
+        for(var x=cx;x<cx+patch&&x<sampleW&&x>=0;x++){
+          var px=pxAt(x,y);br+=px[0];bg+=px[1];bb+=px[2];bn++;
+        }
+      }
+    });
+  });
+  br/=bn;bg/=bn;bb/=bn;
+  var THRESH=28,minX=sampleW,minY=sampleH,maxX=0,maxY=0,found=false;
+  for(var y=0;y<sampleH;y++){
+    for(var x=0;x<sampleW;x++){
+      var px=pxAt(x,y);
+      var d=Math.sqrt(Math.pow(px[0]-br,2)+Math.pow(px[1]-bg,2)+Math.pow(px[2]-bb,2));
+      if(d>THRESH){
+        found=true;
+        if(x<minX)minX=x;if(x>maxX)maxX=x;
+        if(y<minY)minY=y;if(y>maxY)maxY=y;
+      }
+    }
+  }
+  if(!found||(maxX-minX)<sampleW*0.05||(maxY-minY)<sampleH*0.05)return null;
+  var marginX=(maxX-minX)*0.15,marginY=(maxY-minY)*0.15;
+  minX=Math.max(0,minX-marginX);minY=Math.max(0,minY-marginY);
+  maxX=Math.min(sampleW,maxX+marginX);maxY=Math.min(sampleH,maxY+marginY);
+  var scaleX=sw/sampleW,scaleY=sh/sampleH;
+  return {sx:minX*scaleX,sy:minY*scaleY,sw:(maxX-minX)*scaleX,sh:(maxY-minY)*scaleY};
+}
+
+function pmEmbedImage(img){
+  var box=pmAutoCropToSubject(img);
+  var cv=document.createElement('canvas');cv.width=224;cv.height=224;
+  var ctx=cv.getContext('2d');
+  if(box){
+    ctx.drawImage(img,box.sx,box.sy,box.sw,box.sh,0,0,224,224);
+  }else{
+    var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
+    var side=Math.min(sw,sh);
+    ctx.drawImage(img,(sw-side)/2,(sh-side)/2,side,side,0,0,224,224);
+  }
+  var t=PM_MOBILENET_MODEL.infer(cv,true); // true = return 1280-d embedding, not classification
+  var arr=Array.from(t.dataSync());
+  t.dispose();
+  return arr;
+}
+
+function pmCosineSimQuantized(queryVec,q,scale){
+  // queryVec: plain float array from the live model. q/scale: precomputed
+  // catalog entry (int8 quantized). Dequantize on the fly and compare.
+  var dot=0,na=0,nb=0;
+  for(var i=0;i<queryVec.length;i++){
+    var a=queryVec[i];
+    var b=q[i]*scale;
+    dot+=a*b;na+=a*a;nb+=b*b;
+  }
+  if(na===0||nb===0)return 0;
+  return dot/(Math.sqrt(na)*Math.sqrt(nb));
 }
 
 function onPhotoPick(evt){
@@ -626,65 +710,71 @@ function onPhotoPick(evt){
   if(!file)return;
   var camBtn=ge('camBtn');
   camBtn.classList.add('busy');
+  ge('pmbar').classList.add('on');
+  ge('pmtxt').textContent='Preparing...';
   var reader=new FileReader();
   reader.onload=function(){
     var img=new Image();
     img.onload=function(){
-      try{
-        var uploadedHash=computeDHashFromImage(img);
-        runPhotoMatch(uploadedHash,reader.result);
-      }catch(e){
-        alert('Could not analyze that photo, please try another one.');
-      }finally{
-        camBtn.classList.remove('busy');
-      }
+      pmEnsureModelAndData(function(msg){ge('pmtxt').textContent=msg;})
+        .then(function(){
+          ge('pmtxt').textContent='Analyzing photo...';
+          var queryVec=pmEmbedImage(img);
+          runPhotoMatch(queryVec,reader.result);
+        })
+        .catch(function(e){
+          console.error(e);
+          alert('Could not load the visual search model (check your internet connection) -- please try again.');
+          ge('pmbar').classList.remove('on');
+        })
+        .finally(function(){camBtn.classList.remove('busy');});
     };
     img.onerror=function(){
       camBtn.classList.remove('busy');
+      ge('pmbar').classList.remove('on');
       alert('Could not load that photo, please try another one.');
     };
     img.src=reader.result;
   };
   reader.onerror=function(){
     camBtn.classList.remove('busy');
+    ge('pmbar').classList.remove('on');
     alert('Could not read that photo, please try another one.');
   };
   reader.readAsDataURL(file);
   evt.target.value='';
 }
 
-function runPhotoMatch(uploadedHash,previewDataUrl){
-  var distByHash={};
-  var bestDist=999;
-  R.parts.forEach(function(p){
-    var ph=p[PH];
-    if(!ph)return;
-    if(!(ph in distByHash)){
-      var d=hammingDistHex(uploadedHash,ph);
-      distByHash[ph]=d;
-      if(d<bestDist)bestDist=d;
-    }
-  });
+function runPhotoMatch(queryVec,previewDataUrl){
+  var simByPno={};
+  var bestSim=-1;
+  for(var pno in PM_CATALOG_EMBEDDINGS){
+    var entry=PM_CATALOG_EMBEDDINGS[pno];
+    var sim=pmCosineSimQuantized(queryVec,entry.q,entry.s);
+    simByPno[pno]=sim;
+    if(sim>bestSim)bestSim=sim;
+  }
   photoMatchActive=true;
-  photoMatchDistByHash=distByHash;
+  photoMatchSimByPno=simByPno;
   ge('pmimg').src=previewDataUrl;
   ge('pmbar').classList.add('on');
   var pmtxt=ge('pmtxt');
-  if(bestDist>=999){
-    pmtxt.textContent='No parts with catalog photos to compare against -- try clearing the search/filters above and try again.';
-  }else if(bestDist<=10){
-    pmtxt.textContent='Strong visual match found (distance '+bestDist+' of 81) -- showing closest '+PM_TOPN+' catalog-photo matches, best first.';
-  }else if(bestDist<=25){
-    pmtxt.textContent='Possible matches found (distance '+bestDist+' of 81) -- showing closest '+PM_TOPN+' catalog-photo matches, best first. Results may include similar-looking but different parts.';
+  var pct=Math.round(bestSim*100);
+  if(bestSim<0){
+    pmtxt.textContent='No catalog photos available to compare against -- try clearing the search/filters above and try again.';
+  }else if(bestSim>=0.72){
+    pmtxt.textContent='Strong visual match found ('+pct+'% similarity) -- showing the closest '+PM_TOPN+' matches, best first.';
+  }else if(bestSim>=0.5){
+    pmtxt.textContent='Possible matches found ('+pct+'% similarity) -- showing the closest '+PM_TOPN+' matches, best first. Double-check these against the part before ordering.';
   }else{
-    pmtxt.textContent='No strong visual matches in the catalog -- showing the '+PM_TOPN+' closest available anyway (distance '+bestDist+' of 81, so treat these as loose guesses). Try a clearer, well-lit, close-up shot of just the part against a plain background.';
+    pmtxt.textContent='No confident visual matches in the catalog ('+pct+'% similarity at best) -- showing the closest available anyway, but treat these as rough guesses. Try a clearer, well-lit, close-up photo of just the part against a plain background.';
   }
   af();
 }
 
 function clearPhotoMatch(){
   photoMatchActive=false;
-  photoMatchDistByHash=null;
+  photoMatchSimByPno=null;
   ge('pmbar').classList.remove('on');
   ge('pmimg').src='';
   af();

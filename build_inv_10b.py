@@ -708,16 +708,50 @@ function pmAutoCropToSubject(img){
   ctx.drawImage(img,0,0,sampleW,sampleH);
   var data=ctx.getImageData(0,0,sampleW,sampleH).data;
   function pxAt(x,y){var i=(y*sampleW+x)*4;return [data[i],data[i+1],data[i+2]];}
-  var patch=6,br=0,bg=0,bb=0,bn=0;
-  [0,sampleH-patch].forEach(function(cy){
-    [0,sampleW-patch].forEach(function(cx){
-      for(var y=cy;y<cy+patch&&y<sampleH&&y>=0;y++){
-        for(var x=cx;x<cx+patch&&x<sampleW&&x>=0;x++){
-          var px=pxAt(x,y);br+=px[0];bg+=px[1];bb+=px[2];bn++;
-        }
+  var patch=6;
+  // BUG FIX: this heuristic assumes the 4 image corners represent
+  // "background" and looks for whatever differs from them. That
+  // assumption breaks whenever the corners are actually part of the
+  // SUBJECT itself (common in a real close-up phone photo where
+  // equipment fills most/all of the frame) -- the heuristic then gets it
+  // exactly backwards: it averages the corners (equipment color) as if
+  // they were "background", then confidently guesses the crop box should
+  // be centered on some OTHER differently-colored region (a shadow,
+  // cable, dark component, gap between parts) instead of the real
+  // subject. Confirmed via test: a photo with equipment-gray filling the
+  // whole frame (touching all 4 corners) plus one genuinely dark/black
+  // patch elsewhere produced a confidently-wrong crop box centered on
+  // that dark patch, not the equipment -- exactly matching a real user
+  // report of the crop box landing entirely on a black region with the
+  // actual part clearly visible right next to it.
+  //
+  // Fix: before trusting the "corners = background" assumption, check
+  // that the 4 individual corner patches actually agree with EACH OTHER
+  // (are similar in color). If they don't agree, that's a strong signal
+  // this ISN'T a simple "clean background + centered subject" photo, and
+  // the heuristic should honestly abstain (return null -> caller falls
+  // back to a safe centered default box) rather than confidently guessing
+  // a specific, likely-wrong region.
+  var corners=[[0,0],[sampleW-patch,0],[0,sampleH-patch],[sampleW-patch,sampleH-patch]];
+  var cornerAvgs=corners.map(function(c){
+    var cx=c[0],cy=c[1],r=0,g=0,b=0,n=0;
+    for(var y=cy;y<cy+patch&&y<sampleH&&y>=0;y++){
+      for(var x=cx;x<cx+patch&&x<sampleW&&x>=0;x++){
+        var px=pxAt(x,y);r+=px[0];g+=px[1];b+=px[2];n++;
       }
-    });
+    }
+    return n?[r/n,g/n,b/n]:[0,0,0];
   });
+  var CORNER_AGREEMENT_THRESH=40;
+  for(var ci=0;ci<cornerAvgs.length;ci++){
+    for(var cj=ci+1;cj<cornerAvgs.length;cj++){
+      var da=cornerAvgs[ci],dbv=cornerAvgs[cj];
+      var dist=Math.sqrt(Math.pow(da[0]-dbv[0],2)+Math.pow(da[1]-dbv[1],2)+Math.pow(da[2]-dbv[2],2));
+      if(dist>CORNER_AGREEMENT_THRESH)return null; // corners disagree -- abstain, don't guess
+    }
+  }
+  var br=0,bg=0,bb=0,bn=0;
+  cornerAvgs.forEach(function(c){br+=c[0];bg+=c[1];bb+=c[2];bn++;});
   br/=bn;bg/=bn;bb/=bn;
   var THRESH=28,minX=sampleW,minY=sampleH,maxX=0,maxY=0,found=false;
   for(var y=0;y<sampleH;y++){

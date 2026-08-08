@@ -35,6 +35,49 @@ MANUAL_OVERRIDES_FILE = r"C:\Users\Public\10B\sdi_scraper\manual_overrides.json"
 # lazily, the first time a user actually clicks the camera button.
 EMBEDDINGS_CACHE_FILE = r"C:\Users\Public\10B\sdi_scraper\embeddings_cache.json"
 
+# Precomputed average-color cache for every catalog part image, built by
+# sdi_scraper/compute_avg_colors.py. MobileNetV2's shape/texture embedding
+# is only weakly sensitive to raw color (a black plastic part and a
+# similarly-shaped copper/tan part can score close purely on
+# outline/texture) -- a user directly reported this: a photo of a copper
+# pipe elbow returned black plastic parts and electrical breakers as top
+# matches. Blending in this color data lets runPhotoMatch() apply an
+# explicit color-similarity signal on top of shape similarity, so a shape
+# match with wildly different average color gets demoted instead of
+# dominating the ranking on shape alone. Safe no-op if not present yet.
+AVG_COLORS_CACHE_FILE = r"C:\Users\Public\10B\sdi_scraper\avg_colors_cache.json"
+
+
+def load_avg_colors_cache():
+    """Returns {pno: [r,g,b]} -- average color per part number, using the
+    same url-sharing-aware reconstruction as load_embeddings_cache() (see
+    that function's docstring for why: the same photo is often shared by
+    multiple part numbers, and the raw per-url cache only remembers one)."""
+    try:
+        with open(AVG_COLORS_CACHE_FILE, encoding="utf-8") as f:
+            raw = json.load(f)
+    except Exception:
+        return {}
+
+    url_to_color = {}
+    for url, entry in raw.items():
+        c = entry.get("c")
+        if c:
+            url_to_color[url] = c
+
+    enriched = load_enriched_parts()
+    manual = load_manual_overrides()
+
+    out = {}
+    for pno, rec in enriched.items():
+        url = rec.get("image_url")
+        if url and url in url_to_color and pno not in out:
+            out[pno] = url_to_color[url]
+    for pno, url in manual.items():
+        if url and url in url_to_color:
+            out[pno] = url_to_color[url]
+    return out
+
 
 def load_embeddings_cache():
     """Returns {pno: {"q": [int8,...], "s": float}} -- compact quantized
@@ -264,6 +307,13 @@ def build_inventory_portal():
     print(f"Loaded {len(manual_imgs)} manually-submitted images for merge...")
     embeddings_cache = load_embeddings_cache()
     print(f"Loaded {len(embeddings_cache)} precomputed photo embeddings for Search by Photo...")
+    avg_colors_cache = load_avg_colors_cache()
+    print(f"Loaded {len(avg_colors_cache)} precomputed average colors for color-aware photo matching...")
+    # Merge color data directly into the embeddings dict as a "c" field per
+    # pno, so the page fetches both in a single request (catalog_embeddings.json).
+    for pno, color in avg_colors_cache.items():
+        if pno in embeddings_cache:
+            embeddings_cache[pno]["c"] = color
     parts = []
     for r in rows:
         sub = r.fs_sub_market or ''

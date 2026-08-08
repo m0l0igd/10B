@@ -185,7 +185,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   <button class="pl r" id="noimgf" onclick="toggleNoImgF()" title="Show only parts that still need a photo">No Image</button>
   <div class="dv"></div><span id="fc"></span>
   <div class="nr2" style="margin-left:auto">
-    <a href="index.html?v=1786152929" title="Home" class="btn" style="text-decoration:none"><img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt=""> Home</a><button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
+    <a href="index.html?v=1786154899" title="Home" class="btn" style="text-decoration:none"><img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt=""> Home</a><button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
     <button class="btn" onclick="togT()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
   </div>
 </div>
@@ -739,24 +739,37 @@ function openCropModal(img,dataUrl){
   var cropImgEl=ge('cropImg');
   cropImgEl.src=dataUrl;
   cropImgEl.onload=function(){
-    var stage=ge('cropStage');
-    var dispW=cropImgEl.clientWidth,dispH=cropImgEl.clientHeight;
-    var natW=img.naturalWidth,natH=img.naturalHeight;
-    CROP_STATE={img:img,natW:natW,natH:natH,dispW:dispW,dispH:dispH};
-
-    // Seed the initial box from the auto-detect heuristic (best-guess
-    // starting point only -- user still confirms/adjusts it visually).
-    var guess=pmAutoCropToSubject(img);
-    var gx,gy,gw,gh;
-    if(guess){
-      gx=guess.sx/natW*dispW; gy=guess.sy/natH*dispH;
-      gw=guess.sw/natW*dispW; gh=guess.sh/natH*dispH;
-    }else{
-      gw=dispW*0.6; gh=dispH*0.6; gx=(dispW-gw)/2; gy=(dispH-gh)/2;
-    }
-    CROP_STATE.x=gx; CROP_STATE.y=gy; CROP_STATE.w=gw; CROP_STATE.h=gh;
-    cropRenderRect();
+    // BUG FIX: the modal (and therefore its contents, including this <img>)
+    // starts as display:none. Any element with a display:none ancestor
+    // reports clientWidth/clientHeight as 0 -- so the modal MUST be made
+    // visible BEFORE reading those values, or dispW/dispH are always 0 and
+    // the crop box renders as an invisible 0x0 rectangle (this was a
+    // 100%-reproducible bug on every photo, not a device/photo-specific one).
     ge('cropModal').classList.add('on');
+    // Let the browser paint/layout the now-visible modal before measuring.
+    requestAnimationFrame(function(){
+      var dispW=cropImgEl.clientWidth,dispH=cropImgEl.clientHeight;
+      var natW=img.naturalWidth,natH=img.naturalHeight;
+      CROP_STATE={img:img,natW:natW,natH:natH,dispW:dispW,dispH:dispH};
+
+      // Seed the initial box from the auto-detect heuristic (best-guess
+      // starting point only -- user still confirms/adjusts it visually).
+      var guess=pmAutoCropToSubject(img);
+      var gx,gy,gw,gh;
+      if(guess){
+        gx=guess.sx/natW*dispW; gy=guess.sy/natH*dispH;
+        gw=guess.sw/natW*dispW; gh=guess.sh/natH*dispH;
+        // Cap to 90% of frame so there's always visible room to drag/enlarge
+        // the box further if the auto-guess came back too close to full-size.
+        if(gw>dispW*0.9){var cxm=gx+gw/2;gw=dispW*0.9;gx=cxm-gw/2;}
+        if(gh>dispH*0.9){var cym=gy+gh/2;gh=dispH*0.9;gy=cym-gh/2;}
+        gx=Math.max(0,Math.min(gx,dispW-gw)); gy=Math.max(0,Math.min(gy,dispH-gh));
+      }else{
+        gw=dispW*0.6; gh=dispH*0.6; gx=(dispW-gw)/2; gy=(dispH-gh)/2;
+      }
+      CROP_STATE.x=gx; CROP_STATE.y=gy; CROP_STATE.w=gw; CROP_STATE.h=gh;
+      cropRenderRect();
+    });
   };
 }
 
@@ -825,39 +838,73 @@ function cropConfirm(){
     };
     e.preventDefault();
   }
+  // BUG FIX: the previous clamping math computed nw/nh first and only
+  // capped them AFTER against the box's CURRENT x/y -- so whenever the
+  // starting box already filled (or nearly filled) the image, which is
+  // common since pmAutoCropToSubject's guess is often close to full-frame,
+  // there was zero room left to grow into and dragging silently did
+  // nothing at all (100% reproducible whenever the initial box was large,
+  // which is exactly what the user's screenshots showed). Fix: for each
+  // resize handle, compute the FIXED anchor corner (the opposite corner
+  // from the handle being dragged) first, then clamp size against the
+  // real distance from that anchor to the image edge.
   function onMove(e){
     if(!CROP_STATE||!CROP_STATE.drag)return;
     var p=pos(e);
     var d=CROP_STATE.drag;
     var dx=p.x-d.startX,dy=p.y-d.startY;
     var minSize=24;
+    var dispW=CROP_STATE.dispW,dispH=CROP_STATE.dispH;
     if(d.mode==='move'){
-      CROP_STATE.x=Math.max(0,Math.min(CROP_STATE.dispW-CROP_STATE.w,d.origX+dx));
-      CROP_STATE.y=Math.max(0,Math.min(CROP_STATE.dispH-CROP_STATE.h,d.origY+dy));
+      CROP_STATE.x=Math.max(0,Math.min(dispW-CROP_STATE.w,d.origX+dx));
+      CROP_STATE.y=Math.max(0,Math.min(dispH-CROP_STATE.h,d.origY+dy));
     }else{
-      var nx=d.origX,ny=d.origY,nw=d.origW,nh=d.origH;
-      if(d.mode==='resize-se'){nw=Math.max(minSize,d.origW+dx);nh=Math.max(minSize,d.origH+dy);}
-      else if(d.mode==='resize-sw'){nw=Math.max(minSize,d.origW-dx);nx=d.origX+d.origW-nw;nh=Math.max(minSize,d.origH+dy);}
-      else if(d.mode==='resize-ne'){nw=Math.max(minSize,d.origW+dx);nh=Math.max(minSize,d.origH-dy);ny=d.origY+d.origH-nh;}
-      else if(d.mode==='resize-nw'){nw=Math.max(minSize,d.origW-dx);nx=d.origX+d.origW-nw;nh=Math.max(minSize,d.origH-dy);ny=d.origY+d.origH-nh;}
-      CROP_STATE.x=Math.max(0,nx); CROP_STATE.y=Math.max(0,ny);
-      CROP_STATE.w=Math.min(nw,CROP_STATE.dispW-CROP_STATE.x);
-      CROP_STATE.h=Math.min(nh,CROP_STATE.dispH-CROP_STATE.y);
+      var nx,ny,nw,nh;
+      if(d.mode==='resize-se'){
+        nx=d.origX; ny=d.origY;
+        nw=Math.max(minSize,Math.min(d.origW+dx,dispW-nx));
+        nh=Math.max(minSize,Math.min(d.origH+dy,dispH-ny));
+      }else if(d.mode==='resize-sw'){
+        var anchorRX=d.origX+d.origW;
+        nw=Math.max(minSize,Math.min(d.origW-dx,anchorRX));
+        nx=anchorRX-nw;
+        ny=d.origY;
+        nh=Math.max(minSize,Math.min(d.origH+dy,dispH-ny));
+      }else if(d.mode==='resize-ne'){
+        var anchorBY=d.origY+d.origH;
+        nx=d.origX;
+        nw=Math.max(minSize,Math.min(d.origW+dx,dispW-nx));
+        nh=Math.max(minSize,Math.min(d.origH-dy,anchorBY));
+        ny=anchorBY-nh;
+      }else{
+        var anchorRX2=d.origX+d.origW,anchorBY2=d.origY+d.origH;
+        nw=Math.max(minSize,Math.min(d.origW-dx,anchorRX2));
+        nx=anchorRX2-nw;
+        nh=Math.max(minSize,Math.min(d.origH-dy,anchorBY2));
+        ny=anchorBY2-nh;
+      }
+      CROP_STATE.x=nx; CROP_STATE.y=ny; CROP_STATE.w=nw; CROP_STATE.h=nh;
     }
     cropRenderRect();
     e.preventDefault();
   }
   function onUp(){ if(CROP_STATE)CROP_STATE.drag=null; }
-  document.addEventListener('DOMContentLoaded',function(){
-    var rect=ge('cropRect');
-    if(!rect)return;
+  // BUG FIX: this script runs from a <script> tag placed deep in <body>,
+  // AFTER the DOM (including #cropRect) has already been parsed -- so
+  // document.readyState is already 'complete' by the time this code runs,
+  // meaning 'DOMContentLoaded' has ALREADY FIRED and will never fire again.
+  // Waiting for it here meant these listeners were never attached at all,
+  // so dragging the crop box silently did nothing (100% reproducible).
+  // Fix: attach immediately since the element already exists at this point.
+  var rect=ge('cropRect');
+  if(rect){
     rect.addEventListener('mousedown',onDown);
     rect.addEventListener('touchstart',onDown,{passive:false});
     document.addEventListener('mousemove',onMove);
     document.addEventListener('touchmove',onMove,{passive:false});
     document.addEventListener('mouseup',onUp);
     document.addEventListener('touchend',onUp);
-  });
+  }
 })();
 
 function runPhotoMatch(queryVec,previewDataUrl){
@@ -1015,7 +1062,7 @@ if(_ERR){
 }else{
   try{
     // (item-count badge removed from nav per user request)
-    ge('rts').textContent='Data as of Aug 07, 2026 06:35 PM';
+    ge('rts').textContent='Data as of Aug 07, 2026 07:08 PM';
     bH();af();
     if(localStorage.getItem('sb-collapsed')==='1'){
       ge('sb').classList.add('collapsed');

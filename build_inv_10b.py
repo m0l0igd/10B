@@ -1064,6 +1064,20 @@ function pmPopulateNarrowMfrs(){
   sel.innerHTML=html;
 }
 
+// BUG FIX: previously this only re-filtered/re-sorted the table (via af())
+// but never touched the confidence message at the top (#pmtxt) -- so after
+// narrowing to a manufacturer, the header kept showing the ORIGINAL
+// best-similarity score from the unfiltered full-catalog search, even
+// though that score almost always belongs to a COMPLETELY DIFFERENT part
+// from a different manufacturer. This produced a genuinely misleading
+// result: e.g. narrowing to a manufacturer whose closest photo match to
+// the query is actually a poor ~20% similarity would still show the old
+// "54% similarity" headline from before narrowing, falsely implying the
+// now-displayed top result was a decent match when it might be a terrible
+// one. Fix: recompute the best similarity WITHIN the currently active
+// filter (manufacturer + keywords) every time narrowing changes, and show
+// honest, re-tiered confidence messaging against that scoped result set,
+// exactly like the initial (unfiltered) message does.
 function pmApplyNarrow(){
   photoMatchMfrFilter=ge('pmMfrSel').value;
   var kwRaw=ge('pmKeywordInp').value.trim().toLowerCase();
@@ -1073,6 +1087,37 @@ function pmApplyNarrow(){
   af();
   var matchCount=filtered.length;
   ge('pmNarrowCount').textContent=anyActive?(matchCount+' match'+(matchCount===1?'':'es')+' with these details'):'';
+  pmUpdateConfidenceMessage();
+}
+
+// Recomputes the best similarity score among whatever is CURRENTLY shown
+// (i.e. respecting any active manufacturer/keyword narrowing) and rewrites
+// the header message accordingly, so the confidence claim always matches
+// what the user is actually looking at.
+function pmUpdateConfidenceMessage(){
+  var pmtxt=ge('pmtxt');
+  if(!filtered.length){
+    pmtxt.textContent=photoMatchMfrFilter||photoMatchKeywords.length
+      ?'No parts match both the photo AND these details -- try removing a detail, or double-check the manufacturer/spelling.'
+      :'No catalog photos available to compare against -- try clearing the search/filters above and try again.';
+    return;
+  }
+  var bestSimNow=-1;
+  for(var i=0;i<filtered.length;i++){
+    var s=photoMatchSimByPno[filtered[i][PN]];
+    if(typeof s==='number'&&s>bestSimNow)bestSimNow=s;
+  }
+  var pct=Math.round(bestSimNow*100);
+  var scopeNote=(photoMatchMfrFilter||photoMatchKeywords.length)?' among parts matching your details':'';
+  if(bestSimNow<0){
+    pmtxt.textContent='No similarity data available for the current results.';
+  }else if(bestSimNow>=0.72){
+    pmtxt.textContent='Strong visual match found'+scopeNote+' ('+pct+'% similarity) -- showing the closest matches, best first.';
+  }else if(bestSimNow>=0.5){
+    pmtxt.textContent='Possible match found'+scopeNote+' ('+pct+'% similarity) -- double-check against the part before ordering.';
+  }else{
+    pmtxt.textContent='No confident visual match'+scopeNote+' (best is only '+pct+'% similarity) -- the photo doesn\'t closely resemble any of these results. Treat this as a rough guess, or try removing/adjusting the manufacturer/detail filters.';
+  }
 }
 
 var pmNarrowDebounceTimer=null;
@@ -1089,6 +1134,7 @@ function pmResetNarrow(){
   ge('pmNarrowReset').style.display='none';
   ge('pmNarrowCount').textContent='';
   af();
+  pmUpdateConfidenceMessage();
 }
 
 function clearPhotoMatch(){

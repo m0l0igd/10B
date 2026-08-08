@@ -19,21 +19,39 @@ ENRICHED_PARTS_FILE = r"C:\Users\Public\10B\sdi_scraper\enriched_parts.json"
 # These take priority over ZEUS results since a human curated them.
 MANUAL_OVERRIDES_FILE = r"C:\Users\Public\10B\sdi_scraper\manual_overrides.json"
 
-# Precomputed perceptual hashes (dHash) for every catalog part image, built
-# by sdi_scraper/compute_phash_cache.py (or the shard+merge scripts). Used
-# for the "Search by Photo" feature on the global search page -- keyed by
-# image_url, safe no-op if not present yet.
-PHASH_CACHE_FILE = r"C:\Users\Public\10B\sdi_scraper\phash_cache.json"
+# Precomputed MobileNetV2 image-embedding cache for every catalog part
+# image, built by sdi_scraper/compute_embeddings_shard.py (+ merge script).
+# This replaced an earlier dHash-based approach that was too coarse (only
+# captured blurry light/dark gradients) to reliably distinguish visually
+# similar parts -- MobileNet has actually learned real object features
+# (shape, texture, edges) so cosine-similarity ranking against these
+# vectors gives genuinely useful "search by photo" results. Keyed by
+# image_url in the raw cache; safe no-op if not present yet.
+#
+# NOTE: this data is intentionally NOT embedded into the main page
+# payload (it would roughly double the page's download size, and the
+# vast majority of visits never touch this feature). Instead it's written
+# to its own catalog_embeddings.json file that the page only fetches
+# lazily, the first time a user actually clicks the camera button.
+EMBEDDINGS_CACHE_FILE = r"C:\Users\Public\10B\sdi_scraper\embeddings_cache.json"
 
 
-def load_phash_cache():
+def load_embeddings_cache():
+    """Returns {pno: {"q": [int8,...], "s": float}} -- compact quantized
+    embedding per part number, deduplicated (first valid image per pno)."""
     try:
-        with open(PHASH_CACHE_FILE, encoding="utf-8") as f:
+        with open(EMBEDDINGS_CACHE_FILE, encoding="utf-8") as f:
             raw = json.load(f)
-        # Map image_url -> hash string (skip failed/None hashes)
-        return {url: v["hash"] for url, v in raw.items() if v.get("hash")}
     except Exception:
         return {}
+    out = {}
+    for url, entry in raw.items():
+        pno = entry.get("pno")
+        q = entry.get("q")
+        scale = entry.get("scale")
+        if pno and q and scale is not None and pno not in out:
+            out[pno] = {"q": q, "s": scale}
+    return out
 
 
 def load_manual_overrides():
@@ -206,8 +224,8 @@ def build_inventory_portal():
     print(f"Loaded {len(enriched)} ZEUS-enriched parts (images/descriptions) for merge...")
     manual_imgs = load_manual_overrides()
     print(f"Loaded {len(manual_imgs)} manually-submitted images for merge...")
-    phash_cache = load_phash_cache()
-    print(f"Loaded {len(phash_cache)} precomputed photo-hashes for Search by Photo...")
+    embeddings_cache = load_embeddings_cache()
+    print(f"Loaded {len(embeddings_cache)} precomputed photo embeddings for Search by Photo...")
     parts = []
     for r in rows:
         sub = r.fs_sub_market or ''
@@ -283,7 +301,6 @@ def build_inventory_portal():
             "last_order":r.last_order,
             "goh":  int(r.goh) if r.goh else 0,
             "img":  _img,
-            "phash":phash_cache.get(_img, '') if _img else '',
         })
 
     # Group tech summaries dynamically based on correct manager alignments!
@@ -323,7 +340,7 @@ def build_inventory_portal():
             p['area'],p['id'],p['desc'],p['mfr'] or '',p['pno'] or '',
             p['qty'],p['ucost'],p['tcost'],p['area_total'],
             p['rop'],p['maxq'],p['rep'],p['putaway'] or '',p['last_order'] or '',p['goh'],
-            p['fdesc'] or '',p['img'] or '',p['phash'] or '',
+            p['fdesc'] or '',p['img'] or '',
         ])
 
     compact_techs=[]
@@ -575,7 +592,20 @@ window.onerror = function(message, source, lineno, colno, error) {{
 
     with open("10b-inventory.html", "w", encoding="utf-8") as f:
         f.write(global_html)
-    
+
+    # Write the Search-by-Photo catalog embeddings as their own lazy-loaded
+    # file (fetched by the page only when a user clicks the camera button --
+    # see pmEnsureModelAndData() in build_inv_10b.py). Compact {pno:{q,s}}
+    # form: q = int8-quantized 1280-d MobileNetV2 feature vector, s = the
+    # per-vector scale factor needed to dequantize before cosine similarity.
+    with open("catalog_embeddings.json", "w", encoding="utf-8") as f:
+        json.dump(embeddings_cache, f, separators=(",", ":"))
+    try:
+        import shutil
+        shutil.copy("catalog_embeddings.json", r"C:\Users\Public\catalog_embeddings.json")
+    except Exception:
+        pass
+
     # Mirror the newly compiled 10b-inventory.html to C:\Users\Public\ for instant local testing!
     try:
         import shutil

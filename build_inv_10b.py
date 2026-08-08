@@ -95,6 +95,11 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .cropHandle[data-h=sw]{left:-10px;bottom:-10px;cursor:nesw-resize}
 .cropHandle[data-h=se]{right:-10px;bottom:-10px;cursor:nwse-resize}
 .cropftr{display:flex;justify-content:flex-end;gap:10px}
+.pmnarrow{display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--s2);border-bottom:1px solid var(--bd)}
+.pmnarrow.on{display:flex}
+.pmnarrow-lbl{font-size:.72rem;color:var(--mut);font-weight:600;white-space:nowrap}
+.pmkwinp{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:.75rem;color:var(--tx);font-family:inherit;min-width:220px;flex:1;max-width:340px}
+.pmnarrow-count{font-size:.72rem;color:var(--gold);font-weight:600;white-space:nowrap;margin-left:auto}
 .btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:6px 12px;font-size:.72rem;color:#fff;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{background:rgba(255,255,255,.28)}
 .btn svg{display:block;flex-shrink:0}
@@ -237,6 +242,15 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <span class="pmtxt" id="pmtxt">Matching photo against catalog images&#8230;</span>
   <button class="pmclr" onclick="clearPhotoMatch()">&#10005; Clear Photo Search</button>
 </div>
+<div class="pmnarrow" id="pmnarrow">
+  <span class="pmnarrow-lbl">Narrow it down (optional):</span>
+  <select class="hsel" id="pmMfrSel" onchange="pmApplyNarrow()">
+    <option value="">Any manufacturer</option>
+  </select>
+  <input type="text" id="pmKeywordInp" class="pmkwinp" placeholder="Details you know: voltage, amps, color, size&#8230;" oninput="pmApplyNarrowDebounced()">
+  <button class="btn" id="pmNarrowReset" onclick="pmResetNarrow()" style="display:none">&#10005; Reset</button>
+  <span class="pmnarrow-count" id="pmNarrowCount"></span>
+</div>
 <div class="cropmodal" id="cropModal">
   <div class="cropbox">
     <div class="crophdr">Drag the box so it tightly frames just the part (no background), then tap Search</div>
@@ -329,6 +343,14 @@ var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
 var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:13,a:false},filtered=[],page=0;
 var photoMatchActive=false,photoMatchSimByPno=null;
+// "Narrow it down" -- optional manufacturer/keyword filters applied ON TOP
+// of the visual similarity ranking, since MobileNet's embedding alone often
+// can't reliably distinguish visually-similar-but-different industrial
+// parts. Letting the user supply a manufacturer name (if known) and/or a
+// few descriptive keywords (voltage, amps, color, size, etc.) lets us hard-
+// filter the candidate pool using exact catalog data instead of relying
+// purely on possibly-ambiguous visual similarity.
+var photoMatchMfrFilter='',photoMatchKeywords=[];
 var dark=localStorage.getItem('t10b')!=='light';
 var RM_MGRS={},MGR_RM={},MGR_TECHS={};
 R.tech_rows.forEach(function(t){
@@ -411,6 +433,13 @@ function af(){
       // matches (ranked below) rather than risking zero results. PM_TOPN below
       // caps how many we actually show, and the status message is honest
       // about confidence (strong/possible/rough-guess) based on the score.
+      if(photoMatchMfrFilter&&(p[MF]||'')!==photoMatchMfrFilter)return false;
+      if(photoMatchKeywords.length){
+        var hay=((p[FD]||'')+' '+(p[DS]||'')+' '+(p[MF]||'')+' '+(p[PN]||'')).toLowerCase();
+        for(var ki=0;ki<photoMatchKeywords.length;ki++){
+          if(hay.indexOf(photoMatchKeywords[ki])===-1)return false;
+        }
+      }
     }
     if(q){
       var h=[tech||'',mgr||'',rm||'',p[AR]||'',SUBSV[p[SI]]||'',p[ID]||'',p[DS]||'',p[FD]||'',p[MF]||'',p[PN]||'',role||'',p[PU]||'',p[LO]||''].join(' ').toLowerCase();
@@ -961,6 +990,8 @@ function runPhotoMatch(queryVec,previewDataUrl){
   }
   photoMatchActive=true;
   photoMatchSimByPno=simByPno;
+  photoMatchMfrFilter='';
+  photoMatchKeywords=[];
   ge('pmimg').src=previewDataUrl;
   ge('pmbar').classList.add('on');
   var pmtxt=ge('pmtxt');
@@ -974,13 +1005,70 @@ function runPhotoMatch(queryVec,previewDataUrl){
   }else{
     pmtxt.textContent='No confident visual matches in the catalog ('+pct+'% similarity at best) -- showing the closest available anyway, but treat these as rough guesses. Try a clearer, well-lit, close-up photo of just the part against a plain background.';
   }
+  pmPopulateNarrowMfrs();
+  ge('pmnarrow').classList.add('on');
+  ge('pmMfrSel').value='';
+  ge('pmKeywordInp').value='';
+  ge('pmNarrowReset').style.display='none';
+  af();
+}
+
+// Manufacturer dropdown is scoped to only the manufacturers actually present
+// among the best-matching candidates (not the whole 432-manufacturer
+// catalog), since that's a short, relevant, plausible list to pick from --
+// same idea as showing the closest 30 photo matches instead of the full 4000
+// row catalog.
+function pmPopulateNarrowMfrs(){
+  var ranked=Object.keys(photoMatchSimByPno).map(function(pno){return {pno:pno,sim:photoMatchSimByPno[pno]};});
+  ranked.sort(function(a,b){return b.sim-a.sim;});
+  var topPnos={};
+  ranked.slice(0,150).forEach(function(r){topPnos[r.pno]=true;});
+  var mfrSet={};
+  for(var i=0;i<R.parts.length;i++){
+    var p=R.parts[i];
+    if(p[PN]&&topPnos[p[PN]]&&p[MF]){mfrSet[p[MF]]=true;}
+  }
+  var mfrList=Object.keys(mfrSet).sort();
+  var sel=ge('pmMfrSel');
+  var html='<option value="">Any manufacturer</option>';
+ mfrList.forEach(function(m){html+='<option value="'+esc(m)+'">'+esc(m)+'</option>';});
+  sel.innerHTML=html;
+}
+
+function pmApplyNarrow(){
+  photoMatchMfrFilter=ge('pmMfrSel').value;
+  var kwRaw=ge('pmKeywordInp').value.trim().toLowerCase();
+  photoMatchKeywords=kwRaw?kwRaw.split(/\s+/).filter(Boolean):[];
+  var anyActive=!!photoMatchMfrFilter||photoMatchKeywords.length>0;
+  ge('pmNarrowReset').style.display=anyActive?'':'none';
+  af();
+  var matchCount=filtered.length;
+  ge('pmNarrowCount').textContent=anyActive?(matchCount+' match'+(matchCount===1?'':'es')+' with these details'):'';
+}
+
+var pmNarrowDebounceTimer=null;
+function pmApplyNarrowDebounced(){
+  clearTimeout(pmNarrowDebounceTimer);
+  pmNarrowDebounceTimer=setTimeout(pmApplyNarrow,300);
+}
+
+function pmResetNarrow(){
+  photoMatchMfrFilter='';
+  photoMatchKeywords=[];
+  ge('pmMfrSel').value='';
+  ge('pmKeywordInp').value='';
+  ge('pmNarrowReset').style.display='none';
+  ge('pmNarrowCount').textContent='';
   af();
 }
 
 function clearPhotoMatch(){
   photoMatchActive=false;
   photoMatchSimByPno=null;
+  photoMatchMfrFilter='';
+  photoMatchKeywords=[];
   ge('pmbar').classList.remove('on');
+  ge('pmnarrow').classList.remove('on');
   ge('pmimg').src='';
   af();
 }

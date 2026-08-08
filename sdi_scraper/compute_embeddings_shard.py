@@ -123,17 +123,37 @@ async () => {
       return [data[i], data[i+1], data[i+2]];
     }
     const patch = 6;
-    let br=0, bg=0, bb=0, bn=0;
-    for (const cy of [0, sampleH-patch]) {
-      for (const cx of [0, sampleW-patch]) {
-        for (let y = cy; y < cy+patch && y < sampleH && y >= 0; y++) {
-          for (let x = cx; x < cx+patch && x < sampleW && x >= 0; x++) {
-            const [r,g,b] = pxAt(x,y);
-            br+=r; bg+=g; bb+=b; bn++;
-          }
+    // BUG FIX (must stay in sync with pmAutoCropToSubject in
+    // build_inv_10b.py): this heuristic assumes the 4 image corners
+    // represent "background" and looks for whatever differs from them.
+    // That assumption breaks whenever the corners are actually part of
+    // the SUBJECT itself (common in a close-up photo where equipment
+    // fills most/all of the frame) -- the heuristic then gets it exactly
+    // backwards, confidently guessing the crop box should be centered on
+    // some OTHER differently-colored region (a shadow, cable, dark
+    // component) instead of the real subject. Fix: check the 4 corner
+    // patches agree with EACH OTHER before trusting them as "background";
+    // if they disagree, abstain (return null) rather than guess wrong.
+    const corners = [[0,0],[sampleW-patch,0],[0,sampleH-patch],[sampleW-patch,sampleH-patch]];
+    const cornerAvgs = corners.map(([cx,cy]) => {
+      let r=0,g=0,b=0,n=0;
+      for (let y=cy; y<cy+patch && y<sampleH && y>=0; y++) {
+        for (let x=cx; x<cx+patch && x<sampleW && x>=0; x++) {
+          const px = pxAt(x,y); r+=px[0]; g+=px[1]; b+=px[2]; n++;
         }
       }
+      return n ? [r/n, g/n, b/n] : [0,0,0];
+    });
+    const CORNER_AGREEMENT_THRESH = 40;
+    for (let ci=0; ci<cornerAvgs.length; ci++) {
+      for (let cj=ci+1; cj<cornerAvgs.length; cj++) {
+        const [ar,ag,ab] = cornerAvgs[ci], [br2,bg2,bb2] = cornerAvgs[cj];
+        const dist = Math.sqrt((ar-br2)**2 + (ag-bg2)**2 + (ab-bb2)**2);
+        if (dist > CORNER_AGREEMENT_THRESH) return null;
+      }
     }
+    let br=0, bg=0, bb=0, bn=0;
+    cornerAvgs.forEach(([r,g,b]) => { br+=r; bg+=g; bb+=b; bn++; });
     br/=bn; bg/=bn; bb/=bn;
     const THRESH = 28;
     let minX=sampleW, minY=sampleH, maxX=0, maxY=0, found=false;

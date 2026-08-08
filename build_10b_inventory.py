@@ -38,19 +38,57 @@ EMBEDDINGS_CACHE_FILE = r"C:\Users\Public\10B\sdi_scraper\embeddings_cache.json"
 
 def load_embeddings_cache():
     """Returns {pno: {"q": [int8,...], "s": float}} -- compact quantized
-    embedding per part number, deduplicated (first valid image per pno)."""
+    embedding per part number.
+
+    BUG FIX: the same catalog image is frequently shared by MULTIPLE
+    distinct manufacturer part numbers (superseded/duplicate part listings
+    that happen to use the same vendor photo -- confirmed 82 image URLs
+    shared across 2+ part numbers in the current catalog, e.g. "12373.50R"
+    and "12373.5" are both legitimately the same physical part image).
+    compute_embeddings_shard.py's targets dict only keeps ONE pno per
+    image URL (a plain dict assignment silently overwrites), so the raw
+    embeddings_cache.json entry for a shared URL only ever remembers
+    whichever pno happened to be recorded last during scraping -- every
+    OTHER part number that legitimately shares that same photo was
+    silently orphaned from Search-by-Photo even though a perfectly good
+    embedding for their exact image already exists in the cache. This was
+    confirmed to affect 95 real part numbers.
+
+    Fix: reconstruct the FULL set of (pno -> image_url) relationships from
+    enriched_parts.json + manual_overrides.json (the original source data,
+    which still has every pno/url pair, unlike the lossy raw cache keyed
+    only by url) and assign every one of those part numbers the embedding
+    for its image, not just whichever single pno the scraper happened to
+    remember.
+    """
     try:
         with open(EMBEDDINGS_CACHE_FILE, encoding="utf-8") as f:
             raw = json.load(f)
     except Exception:
         return {}
-    out = {}
+
+    # url -> embedding (q, scale), for URLs that were successfully embedded
+    url_to_emb = {}
     for url, entry in raw.items():
-        pno = entry.get("pno")
         q = entry.get("q")
         scale = entry.get("scale")
-        if pno and q and scale is not None and pno not in out:
-            out[pno] = {"q": q, "s": scale}
+        if q and scale is not None:
+            url_to_emb[url] = {"q": q, "s": scale}
+
+    # Reconstruct the full pno -> url mapping from the original source
+    # files (NOT from `raw`, which already lost the 1-url-to-many-pnos
+    # relationship during scraping).
+    enriched = load_enriched_parts()  # {PNO: {..., "image_url": url}}
+    manual = load_manual_overrides()  # {PNO: url}
+
+    out = {}
+    for pno, rec in enriched.items():
+        url = rec.get("image_url")
+        if url and url in url_to_emb and pno not in out:
+            out[pno] = url_to_emb[url]
+    for pno, url in manual.items():
+        if url and url in url_to_emb:
+            out[pno] = url_to_emb[url]  # manual overrides take priority, like elsewhere
     return out
 
 

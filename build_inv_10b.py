@@ -97,6 +97,8 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .cropftr{display:flex;justify-content:flex-end;gap:10px}
 .pmnarrow{display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 16px;background:var(--s2);border-bottom:1px solid var(--bd)}
 .pmnarrow.on{display:flex}
+.pmnarrow.pmnarrow-highlight{background:rgba(255,194,32,.12);border-bottom:1px solid var(--gold);animation:pmpulse 1.6s ease-in-out 2}
+@keyframes pmpulse{0%,100%{background:rgba(255,194,32,.12)}50%{background:rgba(255,194,32,.28)}}
 .pmnarrow-lbl{font-size:.72rem;color:var(--mut);font-weight:600;white-space:nowrap}
 .pmkwinp{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:6px 10px;font-size:.75rem;color:var(--tx);font-family:inherit;min-width:220px;flex:1;max-width:340px}
 .pmnarrow-count{font-size:.72rem;color:var(--gold);font-weight:600;white-space:nowrap;margin-left:auto}
@@ -996,8 +998,29 @@ function runPhotoMatch(queryVec,previewDataUrl){
   ge('pmbar').classList.add('on');
   var pmtxt=ge('pmtxt');
   var pct=Math.round(bestSim*100);
+
+  // "Close call" detector: visual embeddings genuinely cannot read text on
+  // a label (voltage/amperage/model suffix), so parts from the same
+  // product family (e.g. different amp ratings of the same contactor line)
+  // often look nearly identical and score within a few points of each
+  // other. When that happens, the top-1 guess is not reliably trustworthy
+  // even at a decent absolute similarity score -- so detect it explicitly
+  // and steer the user toward the manufacturer/keyword narrowing fields
+  // (which use exact catalog text, not vision) rather than implying
+  // confidence the vision model doesn't actually have.
+  var rankedSims=Object.keys(simByPno).map(function(k){return simByPno[k];}).sort(function(a,b){return b-a;});
+  var closeCallMargin=0.04; // within 4 similarity points of the top score
+  var closeCallCount=1;
+  for(var ci=1;ci<rankedSims.length && ci<10;ci++){
+    if(rankedSims[0]-rankedSims[ci]<=closeCallMargin)closeCallCount++;
+    else break;
+  }
+  var isCloseCall=closeCallCount>=3; // 3+ near-tied candidates
+
   if(bestSim<0){
     pmtxt.textContent='No catalog photos available to compare against -- try clearing the search/filters above and try again.';
+  }else if(isCloseCall){
+    pmtxt.textContent=closeCallCount+' very similar-looking parts found (all within a few points of '+pct+'% similarity) -- the photo alone can\'t tell them apart (likely same product family, different rating printed on the label). Use the manufacturer/detail fields below to narrow it down.';
   }else if(bestSim>=0.72){
     pmtxt.textContent='Strong visual match found ('+pct+'% similarity) -- showing the closest '+PM_TOPN+' matches, best first.';
   }else if(bestSim>=0.5){
@@ -1010,23 +1033,29 @@ function runPhotoMatch(queryVec,previewDataUrl){
   ge('pmMfrSel').value='';
   ge('pmKeywordInp').value='';
   ge('pmNarrowReset').style.display='none';
+  if(isCloseCall){
+    ge('pmnarrow').classList.add('pmnarrow-highlight');
+  }else{
+    ge('pmnarrow').classList.remove('pmnarrow-highlight');
+  }
   af();
 }
 
-// Manufacturer dropdown is scoped to only the manufacturers actually present
-// among the best-matching candidates (not the whole 432-manufacturer
-// catalog), since that's a short, relevant, plausible list to pick from --
-// same idea as showing the closest 30 photo matches instead of the full 4000
-// row catalog.
+// BUG FIX: the manufacturer dropdown was previously scoped to only the
+// manufacturers present among the TOP 150 visual-similarity candidates.
+// That's backwards -- if the AI's visual guess is off (which is exactly
+// when a user most needs this narrowing tool), the correct manufacturer
+// may not even be in that top-150 slice, making it literally impossible to
+// select. The manufacturer filter itself (in af()) already checks against
+// the full parts list, not just the top-150 -- so there's no reason to
+// artificially restrict the dropdown. Now sourced from the ENTIRE catalog's
+// manufacturer list (~430 distinct values) so any real manufacturer can
+// always be selected, regardless of how good or bad the visual guess was.
 function pmPopulateNarrowMfrs(){
-  var ranked=Object.keys(photoMatchSimByPno).map(function(pno){return {pno:pno,sim:photoMatchSimByPno[pno]};});
-  ranked.sort(function(a,b){return b.sim-a.sim;});
-  var topPnos={};
-  ranked.slice(0,150).forEach(function(r){topPnos[r.pno]=true;});
   var mfrSet={};
   for(var i=0;i<R.parts.length;i++){
     var p=R.parts[i];
-    if(p[PN]&&topPnos[p[PN]]&&p[MF]){mfrSet[p[MF]]=true;}
+    if(p[MF]){mfrSet[p[MF]]=true;}
   }
   var mfrList=Object.keys(mfrSet).sort();
   var sel=ge('pmMfrSel');

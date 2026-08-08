@@ -28,6 +28,19 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .pmtxt{font-size:.72rem;color:var(--sub)}
 .pmclr{background:var(--s1);border:1px solid var(--bd);border-radius:6px;padding:4px 10px;font-size:.68rem;color:var(--tx);cursor:pointer}
 .pmclr:hover{background:var(--s2)}
+.cropmodal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:10000;align-items:center;justify-content:center;padding:20px}
+.cropmodal.on{display:flex}
+.cropbox{background:var(--s1);border:1px solid var(--bd);border-radius:10px;padding:16px;max-width:520px;width:100%;max-height:90vh;display:flex;flex-direction:column;gap:12px}
+.crophdr{font-size:.8rem;color:var(--tx);text-align:center;font-weight:600}
+.cropstage{position:relative;width:100%;max-height:60vh;overflow:hidden;background:#000;border-radius:6px;display:flex;align-items:center;justify-content:center;touch-action:none}
+.cropstage img{max-width:100%;max-height:60vh;display:block;user-select:none;-webkit-user-drag:none}
+.croprect{position:absolute;border:2px solid #ffc220;box-shadow:0 0 0 2000px rgba(0,0,0,.5);cursor:move;touch-action:none}
+.cropHandle{position:absolute;width:18px;height:18px;background:#ffc220;border:2px solid #1a1a1a;border-radius:50%;touch-action:none}
+.cropHandle[data-h=nw]{left:-10px;top:-10px;cursor:nwse-resize}
+.cropHandle[data-h=ne]{right:-10px;top:-10px;cursor:nesw-resize}
+.cropHandle[data-h=sw]{left:-10px;bottom:-10px;cursor:nesw-resize}
+.cropHandle[data-h=se]{right:-10px;bottom:-10px;cursor:nwse-resize}
+.cropftr{display:flex;justify-content:flex-end;gap:10px}
 .btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:6px;padding:6px 12px;font-size:.72rem;color:#fff;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .btn:hover{background:rgba(255,255,255,.28)}
 .btn svg{display:block;flex-shrink:0}
@@ -49,6 +62,8 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .pl.gold{border-color:var(--gold);color:var(--gold)}
 .pl.gold:hover{background:rgba(255,194,32,.15);border-color:var(--gold);color:var(--gold)}
 .pl.gold.on{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:#1a1a1a;font-weight:700}
+.btn.gold:hover{background:#e0ab1c}
 .pl.r{border-color:var(--red);color:var(--red)}
 .pl.r:hover{background:rgba(248,81,73,.15);border-color:var(--red);color:var(--red)}
 .pl.r.on{background:var(--red);border-color:var(--red);color:#fff}
@@ -170,7 +185,7 @@ window.onerror = function(message, source, lineno, colno, error) {
   <button class="pl r" id="noimgf" onclick="toggleNoImgF()" title="Show only parts that still need a photo">No Image</button>
   <div class="dv"></div><span id="fc"></span>
   <div class="nr2" style="margin-left:auto">
-    <a href="index.html?v=1786151802" title="Home" class="btn" style="text-decoration:none"><img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt=""> Home</a><button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
+    <a href="index.html?v=1786152929" title="Home" class="btn" style="text-decoration:none"><img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt=""> Home</a><button class="btn" onclick="cpLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
     <button class="btn" onclick="togT()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
   </div>
 </div>
@@ -178,6 +193,24 @@ window.onerror = function(message, source, lineno, colno, error) {
   <img class="pmimg" id="pmimg" src="" alt="">
   <span class="pmtxt" id="pmtxt">Matching photo against catalog images&#8230;</span>
   <button class="pmclr" onclick="clearPhotoMatch()">&#10005; Clear Photo Search</button>
+</div>
+<div class="cropmodal" id="cropModal">
+  <div class="cropbox">
+    <div class="crophdr">Drag the box so it tightly frames just the part (no background), then tap Search</div>
+    <div class="cropstage" id="cropStage">
+      <img id="cropImg" src="" alt="">
+      <div class="croprect" id="cropRect">
+        <div class="cropHandle" data-h="nw"></div>
+        <div class="cropHandle" data-h="ne"></div>
+        <div class="cropHandle" data-h="sw"></div>
+        <div class="cropHandle" data-h="se"></div>
+      </div>
+    </div>
+    <div class="cropftr">
+      <button class="btn" onclick="cropCancel()">Cancel</button>
+      <button class="btn gold" onclick="cropConfirm()">&#128269; Search This Crop</button>
+    </div>
+  </div>
 </div>
 <div class="sts">
   <div class="sc"><div class="sv" id="si">-</div><div class="sl">Line Items</div></div>
@@ -632,16 +665,31 @@ function pmAutoCropToSubject(img){
   return {sx:minX*scaleX,sy:minY*scaleY,sw:(maxX-minX)*scaleX,sh:(maxY-minY)*scaleY};
 }
 
-function pmEmbedImage(img){
-  var box=pmAutoCropToSubject(img);
+// box (optional): {sx,sy,sw,sh} in the image's natural pixel coordinates,
+// e.g. from the user-adjustable crop UI (see cropConfirm()). This is now
+// the PRIMARY way real user photos get cropped -- an earlier version tried
+// to auto-detect "background vs. part" purely from pixel-color heuristics,
+// but that proved unreliable on real-world photos (uneven lighting,
+// reflections, cluttered backgrounds all fool it, silently feeding the
+// model a crop of the wrong region and producing garbage matches with no
+// visible sign anything went wrong). Letting the user confirm/adjust the
+// crop for a couple seconds guarantees the model always sees the actual
+// part. pmAutoCropToSubject() is kept only as an initial best-guess
+// starting position for that crop box, never as the final answer.
+function pmEmbedImage(img,box){
   var cv=document.createElement('canvas');cv.width=224;cv.height=224;
   var ctx=cv.getContext('2d');
   if(box){
     ctx.drawImage(img,box.sx,box.sy,box.sw,box.sh,0,0,224,224);
   }else{
-    var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
-    var side=Math.min(sw,sh);
-    ctx.drawImage(img,(sw-side)/2,(sh-side)/2,side,side,0,0,224,224);
+    var autoBox=pmAutoCropToSubject(img);
+    if(autoBox){
+      ctx.drawImage(img,autoBox.sx,autoBox.sy,autoBox.sw,autoBox.sh,0,0,224,224);
+    }else{
+      var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
+      var side=Math.min(sw,sh);
+      ctx.drawImage(img,(sw-side)/2,(sh-side)/2,side,side,0,0,224,224);
+    }
   }
   var t=PM_MOBILENET_MODEL.infer(cv,true); // true = return 1280-d embedding, not classification
   var arr=Array.from(t.dataSync());
@@ -662,45 +710,155 @@ function pmCosineSimQuantized(queryVec,q,scale){
   return dot/(Math.sqrt(na)*Math.sqrt(nb));
 }
 
+// -- CROP CONFIRMATION UI --
+// Real-world photos are too unpredictable for a fully automatic
+// "guess where the background ends and the part begins" heuristic to be
+// trustworthy (see pmAutoCropToSubject's comment). Instead, after a photo
+// is picked we show it with a draggable/resizable box (seeded from that
+// heuristic as a starting guess) and require the user to confirm/adjust
+// it before running the match -- a couple seconds of user input in
+// exchange for a huge, verifiable accuracy improvement.
+var CROP_STATE=null; // {img, natW, natH, dispW, dispH, x,y,w,h (in DISPLAY px), drag:{...}}
+
 function onPhotoPick(evt){
   var file=evt.target.files&&evt.target.files[0];
   if(!file)return;
+  var reader=new FileReader();
+  reader.onload=function(){
+    var img=new Image();
+    img.onload=function(){ openCropModal(img,reader.result); };
+    img.onerror=function(){ alert('Could not load that photo, please try another one.'); };
+    img.src=reader.result;
+  };
+  reader.onerror=function(){ alert('Could not read that photo, please try another one.'); };
+  reader.readAsDataURL(file);
+  evt.target.value='';
+}
+
+function openCropModal(img,dataUrl){
+  var cropImgEl=ge('cropImg');
+  cropImgEl.src=dataUrl;
+  cropImgEl.onload=function(){
+    var stage=ge('cropStage');
+    var dispW=cropImgEl.clientWidth,dispH=cropImgEl.clientHeight;
+    var natW=img.naturalWidth,natH=img.naturalHeight;
+    CROP_STATE={img:img,natW:natW,natH:natH,dispW:dispW,dispH:dispH};
+
+    // Seed the initial box from the auto-detect heuristic (best-guess
+    // starting point only -- user still confirms/adjusts it visually).
+    var guess=pmAutoCropToSubject(img);
+    var gx,gy,gw,gh;
+    if(guess){
+      gx=guess.sx/natW*dispW; gy=guess.sy/natH*dispH;
+      gw=guess.sw/natW*dispW; gh=guess.sh/natH*dispH;
+    }else{
+      gw=dispW*0.6; gh=dispH*0.6; gx=(dispW-gw)/2; gy=(dispH-gh)/2;
+    }
+    CROP_STATE.x=gx; CROP_STATE.y=gy; CROP_STATE.w=gw; CROP_STATE.h=gh;
+    cropRenderRect();
+    ge('cropModal').classList.add('on');
+  };
+}
+
+function cropRenderRect(){
+  var r=ge('cropRect');
+  r.style.left=CROP_STATE.x+'px';
+  r.style.top=CROP_STATE.y+'px';
+  r.style.width=CROP_STATE.w+'px';
+  r.style.height=CROP_STATE.h+'px';
+}
+
+function cropCancel(){
+  ge('cropModal').classList.remove('on');
+  CROP_STATE=null;
+}
+
+function cropConfirm(){
+  if(!CROP_STATE)return;
+  var s=CROP_STATE;
+  var scaleX=s.natW/s.dispW,scaleY=s.natH/s.dispH;
+  var box={sx:s.x*scaleX,sy:s.y*scaleY,sw:s.w*scaleX,sh:s.h*scaleY};
+  var img=s.img;
+  var previewDataUrl=ge('cropImg').src;
+  ge('cropModal').classList.remove('on');
+
+  // Build a small preview thumbnail of EXACTLY what will be searched, so
+  // the result bar is self-explanatory (shows the crop, not the whole photo).
+  var thumbCv=document.createElement('canvas');thumbCv.width=80;thumbCv.height=80;
+  thumbCv.getContext('2d').drawImage(img,box.sx,box.sy,box.sw,box.sh,0,0,80,80);
+  var croppedPreviewUrl=thumbCv.toDataURL('image/jpeg',0.85);
+
   var camBtn=ge('camBtn');
   camBtn.classList.add('busy');
   ge('pmbar').classList.add('on');
   ge('pmtxt').textContent='Preparing...';
-  var reader=new FileReader();
-  reader.onload=function(){
-    var img=new Image();
-    img.onload=function(){
-      pmEnsureModelAndData(function(msg){ge('pmtxt').textContent=msg;})
-        .then(function(){
-          ge('pmtxt').textContent='Analyzing photo...';
-          var queryVec=pmEmbedImage(img);
-          runPhotoMatch(queryVec,reader.result);
-        })
-        .catch(function(e){
-          console.error(e);
-          alert('Could not load the visual search model (check your internet connection) -- please try again.');
-          ge('pmbar').classList.remove('on');
-        })
-        .finally(function(){camBtn.classList.remove('busy');});
-    };
-    img.onerror=function(){
-      camBtn.classList.remove('busy');
+  pmEnsureModelAndData(function(msg){ge('pmtxt').textContent=msg;})
+    .then(function(){
+      ge('pmtxt').textContent='Analyzing cropped photo...';
+      var queryVec=pmEmbedImage(img,box);
+      runPhotoMatch(queryVec,croppedPreviewUrl);
+    })
+    .catch(function(e){
+      console.error(e);
+      alert('Could not load the visual search model (check your internet connection) -- please try again.');
       ge('pmbar').classList.remove('on');
-      alert('Could not load that photo, please try another one.');
-    };
-    img.src=reader.result;
-  };
-  reader.onerror=function(){
-    camBtn.classList.remove('busy');
-    ge('pmbar').classList.remove('on');
-    alert('Could not read that photo, please try another one.');
-  };
-  reader.readAsDataURL(file);
-  evt.target.value='';
+    })
+    .finally(function(){camBtn.classList.remove('busy');CROP_STATE=null;});
 }
+
+(function(){
+  function pos(e){
+    if(e.touches&&e.touches.length)return {x:e.touches[0].clientX,y:e.touches[0].clientY};
+    return {x:e.clientX,y:e.clientY};
+  }
+  function onDown(e){
+    if(!CROP_STATE)return;
+    var handle=e.target.getAttribute&&e.target.getAttribute('data-h');
+    var stage=ge('cropStage');
+    var stageRect=stage.getBoundingClientRect();
+    var p=pos(e);
+    CROP_STATE.drag={
+      mode:handle?('resize-'+handle):'move',
+      startX:p.x,startY:p.y,
+      origX:CROP_STATE.x,origY:CROP_STATE.y,origW:CROP_STATE.w,origH:CROP_STATE.h,
+      stageRect:stageRect
+    };
+    e.preventDefault();
+  }
+  function onMove(e){
+    if(!CROP_STATE||!CROP_STATE.drag)return;
+    var p=pos(e);
+    var d=CROP_STATE.drag;
+    var dx=p.x-d.startX,dy=p.y-d.startY;
+    var minSize=24;
+    if(d.mode==='move'){
+      CROP_STATE.x=Math.max(0,Math.min(CROP_STATE.dispW-CROP_STATE.w,d.origX+dx));
+      CROP_STATE.y=Math.max(0,Math.min(CROP_STATE.dispH-CROP_STATE.h,d.origY+dy));
+    }else{
+      var nx=d.origX,ny=d.origY,nw=d.origW,nh=d.origH;
+      if(d.mode==='resize-se'){nw=Math.max(minSize,d.origW+dx);nh=Math.max(minSize,d.origH+dy);}
+      else if(d.mode==='resize-sw'){nw=Math.max(minSize,d.origW-dx);nx=d.origX+d.origW-nw;nh=Math.max(minSize,d.origH+dy);}
+      else if(d.mode==='resize-ne'){nw=Math.max(minSize,d.origW+dx);nh=Math.max(minSize,d.origH-dy);ny=d.origY+d.origH-nh;}
+      else if(d.mode==='resize-nw'){nw=Math.max(minSize,d.origW-dx);nx=d.origX+d.origW-nw;nh=Math.max(minSize,d.origH-dy);ny=d.origY+d.origH-nh;}
+      CROP_STATE.x=Math.max(0,nx); CROP_STATE.y=Math.max(0,ny);
+      CROP_STATE.w=Math.min(nw,CROP_STATE.dispW-CROP_STATE.x);
+      CROP_STATE.h=Math.min(nh,CROP_STATE.dispH-CROP_STATE.y);
+    }
+    cropRenderRect();
+    e.preventDefault();
+  }
+  function onUp(){ if(CROP_STATE)CROP_STATE.drag=null; }
+  document.addEventListener('DOMContentLoaded',function(){
+    var rect=ge('cropRect');
+    if(!rect)return;
+    rect.addEventListener('mousedown',onDown);
+    rect.addEventListener('touchstart',onDown,{passive:false});
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('mouseup',onUp);
+    document.addEventListener('touchend',onUp);
+  });
+})();
 
 function runPhotoMatch(queryVec,previewDataUrl){
   var simByPno={};
@@ -857,7 +1015,7 @@ if(_ERR){
 }else{
   try{
     // (item-count badge removed from nav per user request)
-    ge('rts').textContent='Data as of Aug 07, 2026 06:16 PM';
+    ge('rts').textContent='Data as of Aug 07, 2026 06:35 PM';
     bH();af();
     if(localStorage.getItem('sb-collapsed')==='1'){
       ge('sb').classList.add('collapsed');

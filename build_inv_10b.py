@@ -461,7 +461,7 @@ function af(){
   // natural order" shortcut no longer applies to any remaining column --
   // always sort explicitly now.
   if(photoMatchActive){
-    filtered.sort(function(a,b){return photoMatchSimByPno[b[PN]]-photoMatchSimByPno[a[PN]];});
+    filtered.sort(function(a,b){return photoMatchSimByPno[pmKey(b)]-photoMatchSimByPno[pmKey(a)];});
     filtered=filtered.slice(0,PM_TOPN);
   }else{
     filtered.sort(function(a,b){
@@ -811,6 +811,21 @@ function pmAvgColor(img,box){
   var r=0,g=0,b=0,n=0;
   for(var i=0;i<data.length;i+=4){r+=data[i];g+=data[i+1];b+=data[i+2];n++;}
   return [Math.round(r/n),Math.round(g/n),Math.round(b/n)];
+}
+
+// Search-by-Photo catalog embeddings are keyed by part number for most
+// parts, but a subset of parts have NO part number at all (upstream data
+// quality issue -- see build_10b_inventory.py's load_enriched_by_description()
+// docstring) and are keyed by Walmart item_id instead in that case. This
+// helper picks whichever key actually has an embedding, so photo-match
+// lookups work uniformly regardless of which fallback tier a part's image
+// came from.
+function pmKey(p){
+  var pno=p[PN];
+  if(pno&&PM_CATALOG_EMBEDDINGS[pno])return pno;
+  var id=p[ID];
+  if(id&&PM_CATALOG_EMBEDDINGS[id])return id;
+  return pno||id;
 }
 
 // Color similarity in [0,1], 1 = identical average color. Uses Euclidean
@@ -1240,7 +1255,7 @@ function pmUpdateConfidenceMessage(){
   }
   var bestSimNow=-1;
   for(var i=0;i<filtered.length;i++){
-    var s=photoMatchSimByPno[filtered[i][PN]];
+    var s=photoMatchSimByPno[pmKey(filtered[i])];
     if(typeof s==='number'&&s>bestSimNow)bestSimNow=s;
   }
   var pct=Math.round(bestSimNow*100);

@@ -13,6 +13,13 @@ from google.oauth2.service_account import Credentials
 # ---------------------------------------------------------------------------
 ENRICHED_PARTS_FILE = r"C:\Users\Public\10B\sdi_scraper\enriched_parts.json"
 
+# Third-tier fallback: parts with NO usable part number at all (see the
+# upstream-BigQuery-NULL-part-number issue documented in
+# load_enriched_by_item_id()'s docstring), enriched by SEARCHING SDI with a
+# code guessed from the free-text description instead (populated by
+# sdi_scraper/scrape_missing_by_description.py). Keyed by Walmart item_id.
+ENRICHED_BY_DESCRIPTION_FILE = r"C:\Users\Public\10B\sdi_scraper\enriched_by_description.json"
+
 # Manually-submitted images (via the site's "+ Add Image" button -> "Export
 # My Added Images" -> sent in and merged here). Keyed by uppercased part
 # number, same shape as the exported JSON: {"PART-NO": "https://..."}.
@@ -132,7 +139,54 @@ def load_embeddings_cache():
     for pno, url in manual.items():
         if url and url in url_to_emb:
             out[pno] = url_to_emb[url]  # manual overrides take priority, like elsewhere
+
+    # Third tier: parts with no part number at all get keyed by item_id
+    # instead (see load_enriched_by_description()'s docstring) -- these
+    # images need their own embeddings computed too (via
+    # sdi_scraper/compute_embeddings_shard.py against
+    # enriched_by_description.json), at which point they'll show up in
+    # this same raw url_to_emb map and get wired in here.
+    try:
+        with open(ENRICHED_BY_DESCRIPTION_FILE, encoding="utf-8") as f:
+            desc_rows = json.load(f)
+        for row in desc_rows:
+            item_id = (row.get("item_id") or "").upper()
+            url = row.get("image_url")
+            if item_id and url and url in url_to_emb and row.get("found"):
+                out[item_id] = url_to_emb[url]
+    except Exception:
+        pass
+
     return out
+
+
+def load_enriched_by_description():
+    """Third-tier fallback -- {WALMART_ITEM_ID: image_url} for parts that
+    have NO usable part number at all (not even recoverable via the
+    item_id-embedded-in-detail_url trick in load_enriched_by_item_id(),
+    because these parts were never scraped under ANY key before). These
+    come from scrape_missing_by_description.py, which searches SDI using
+    a code guessed from the free-text description instead of a real part
+    number, with a stricter confidence check before accepting a match
+    (see that script's is_confident_match() -- fuzzy description-based
+    search is more error-prone than an exact part-number lookup, so we
+    only trust it when the matched listing genuinely cross-references one
+    of our extracted codes).
+    """
+    try:
+        with open(ENRICHED_BY_DESCRIPTION_FILE, encoding="utf-8") as f:
+            rows = json.load(f)
+        result = {}
+        for r in rows:
+            item_id = (r.get("item_id") or "").upper()
+            img = r.get("image_url") or ""
+            if img.startswith("/Images/"):
+                img = ""
+            if item_id and img and r.get("found"):
+                result[item_id] = img
+        return result
+    except Exception:
+        return {}
 
 
 def load_manual_overrides():
@@ -357,6 +411,8 @@ def build_inventory_portal():
     print(f"Loaded {len(enriched)} ZEUS-enriched parts (images/descriptions) for merge...")
     enriched_by_item_id = load_enriched_by_item_id()
     print(f"Loaded {len(enriched_by_item_id)} ZEUS-enriched parts indexed by Walmart item_id (fallback join for rows missing a part number)...")
+    enriched_by_description = load_enriched_by_description()
+    print(f"Loaded {len(enriched_by_description)} description-based matches (3rd-tier fallback for parts with no part number AND no prior item_id match)...")
     manual_imgs = load_manual_overrides()
     print(f"Loaded {len(manual_imgs)} manually-submitted images for merge...")
     embeddings_cache = load_embeddings_cache()
@@ -429,6 +485,7 @@ def build_inventory_portal():
             manual_imgs.get(_pno_upper)
             or (enriched.get(_pno_upper) or {}).get("image_url")
             or enriched_by_item_id.get((r.item_id or '').upper())
+            or enriched_by_description.get((r.item_id or '').upper())
             or ''
         )
 

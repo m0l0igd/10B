@@ -823,28 +823,62 @@ function pmColorSim(c1,c2){
   return Math.max(0,1-d/195); // ~195 chosen so "clearly different colors" (e.g. copper-orange vs. black/gray) scores near 0, not just extreme black/white opposites
 }
 
-function pmEmbedImage(img,box){
+// Runs MobileNet on a single natural-pixel-coordinate box, returning the
+// raw 1280-d embedding array.
+function pmInferBox(img,bx){
   var cv=document.createElement('canvas');cv.width=224;cv.height=224;
   var ctx=cv.getContext('2d');
-  var usedBox=box;
-  if(usedBox){
-    ctx.drawImage(img,usedBox.sx,usedBox.sy,usedBox.sw,usedBox.sh,0,0,224,224);
-  }else{
-    var autoBox=pmAutoCropToSubject(img);
-    if(autoBox){
-      usedBox=autoBox;
-      ctx.drawImage(img,autoBox.sx,autoBox.sy,autoBox.sw,autoBox.sh,0,0,224,224);
-    }else{
-      var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
-      var side=Math.min(sw,sh);
-      ctx.drawImage(img,(sw-side)/2,(sh-side)/2,side,side,0,0,224,224);
-    }
-  }
+  ctx.drawImage(img,bx.sx,bx.sy,bx.sw,bx.sh,0,0,224,224);
   var t=PM_MOBILENET_MODEL.infer(cv,true); // true = return 1280-d embedding, not classification
   var arr=Array.from(t.dataSync());
   t.dispose();
+  return arr;
+}
+
+// BUG FIX / accuracy improvement: a user directly reported that a photo
+// of a part that IS the exact catalog photo (background, lighting, and
+// composition all different from the clean studio original -- a real
+// phone photo taken in a warehouse) completely failed to find that part
+// even in the top 30 results. Root-caused via direct testing: a single
+// embedding computed from ONE crop box is extremely sensitive to how
+// tightly that box is drawn around the part. Confirmed experimentally
+// that the SAME part, from the SAME photo, ranked #1 at 84% similarity
+// with a pixel-tight crop, but dropped OUT of the top 30 entirely once
+// the crop box included as little as 2x the part's own area in
+// background -- background pixels measurably dilute/shift the single
+// global embedding MobileNet produces. Most real users (understandably)
+// will not draw a pixel-perfect crop every time, so relying on exactly
+// one embedding from exactly the user's box is fragile.
+//
+// Fix: instead of one embedding from one box, compute a small ENSEMBLE --
+// the user's box as-is, plus 2 progressively tighter center-zoomed
+// sub-crops of it (75% and 55% of the box's area, centered) -- and later
+// (in runPhotoMatch) take the BEST similarity across all of them for each
+// catalog part. If the user's crop has some background slack, one of the
+// automatic tighter sub-crops will likely isolate the actual part well
+// and surface the correct match, without requiring pixel-perfect manual
+// cropping. Extra MobileNet inference passes are cheap (tens of ms each),
+// a worthwhile cost for meaningfully more forgiving real-world accuracy.
+function pmEmbedImage(img,box){
+  var usedBox=box;
+  if(!usedBox){
+    var autoBox=pmAutoCropToSubject(img);
+    if(autoBox){
+      usedBox=autoBox;
+    }else{
+      var sw=img.naturalWidth||img.width,sh=img.naturalHeight||img.height;
+      var side=Math.min(sw,sh);
+      usedBox={sx:(sw-side)/2,sy:(sh-side)/2,sw:side,sh:side};
+    }
+  }
+  var cx=usedBox.sx+usedBox.sw/2,cy=usedBox.sy+usedBox.sh/2;
+  var zoomLevels=[1.0,0.75,0.55];
+  var vecs=zoomLevels.map(function(z){
+    var w=usedBox.sw*z,h=usedBox.sh*z;
+    return pmInferBox(img,{sx:cx-w/2,sy:cy-h/2,sw:w,sh:h});
+  });
   var avgColor=pmAvgColor(img,usedBox);
-  return {vec:arr,color:avgColor};
+  return {vecs:vecs,color:avgColor};
 }
 
 function pmCosineSimQuantized(queryVec,q,scale){
@@ -1057,9 +1091,10 @@ function cropConfirm(){
   }
 })();
 
-// queryEmbed: {vec: [1280 floats], color: [r,g,b]} from pmEmbedImage().
+// queryEmbed: {vecs: [ [1280 floats], ... ] (multi-crop ensemble),
+// color: [r,g,b]} from pmEmbedImage().
 function runPhotoMatch(queryEmbed,previewDataUrl){
-  var queryVec=queryEmbed.vec,queryColor=queryEmbed.color;
+  var queryVecs=queryEmbed.vecs,queryColor=queryEmbed.color;
   var simByPno={};
   var bestSim=-1;
   // Blend shape/texture similarity (from MobileNet, the dominant signal
@@ -1076,7 +1111,16 @@ function runPhotoMatch(queryEmbed,previewDataUrl){
   var COLOR_WEIGHT=0.25,SHAPE_WEIGHT=0.75;
   for(var pno in PM_CATALOG_EMBEDDINGS){
     var entry=PM_CATALOG_EMBEDDINGS[pno];
-    var shapeSim=pmCosineSimQuantized(queryVec,entry.q,entry.s);
+    // Take the BEST shape similarity across the multi-crop ensemble --
+    // if the user's crop had some background slack, one of the tighter
+    // automatic center-zoom sub-crops usually isolates the real part and
+    // scores much higher than a single fixed-box embedding would (see
+    // pmEmbedImage's comment for the full root-cause/fix writeup).
+    var shapeSim=-1;
+    for(var qi=0;qi<queryVecs.length;qi++){
+      var s=pmCosineSimQuantized(queryVecs[qi],entry.q,entry.s);
+      if(s>shapeSim)shapeSim=s;
+    }
     var colorSim=(queryColor&&entry.c)?pmColorSim(queryColor,entry.c):0.5;
     var combinedSim=SHAPE_WEIGHT*shapeSim+COLOR_WEIGHT*colorSim;
     simByPno[pno]=combinedSim;

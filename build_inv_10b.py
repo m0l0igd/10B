@@ -975,7 +975,28 @@ function openCropModal(img,dataUrl){
     requestAnimationFrame(function(){
       var dispW=cropImgEl.clientWidth,dispH=cropImgEl.clientHeight;
       var natW=img.naturalWidth,natH=img.naturalHeight;
-      CROP_STATE={img:img,natW:natW,natH:natH,dispW:dispW,dispH:dispH};
+      // BUG FIX (iPhone crop drag, esp. rightward, "almost impossible"):
+      // .cropstage is a flex container that CENTERS the <img> (since the
+      // img uses max-width/max-height to fit the stage) -- so whenever the
+      // photo's aspect ratio doesn't match the stage's (nearly guaranteed
+      // for a portrait iPhone photo inside this landscape-leaning stage),
+      // the image renders with empty letterbox gaps on the sides. dispW/
+      // dispH above are the IMAGE's own rendered size, but .croprect is
+      // positioned absolute relative to the STAGE, not the image -- so
+      // CROP_STATE.x=0 was actually the stage's left edge, not the image's
+      // left edge, and the drag-clamp ceiling (dispW - boxWidth) landed
+      // short of the image's true right edge by exactly the letterbox gap
+      // width. That made the box physically unable to reach the real right
+      // (or bottom) portion of the photo -- 100% reproducible for any
+      // portrait photo, which is the overwhelming majority of phone photos
+      // of a part. Fix: measure the image's actual offset within the stage
+      // and add it back in whenever we set the box's CSS position, while
+      // keeping every other calculation (drag deltas, clamping bounds)
+      // purely image-relative, which was already correct.
+      var stageRect=ge('cropStage').getBoundingClientRect();
+      var imgRect=cropImgEl.getBoundingClientRect();
+      CROP_STATE={img:img,natW:natW,natH:natH,dispW:dispW,dispH:dispH,
+        offX:imgRect.left-stageRect.left,offY:imgRect.top-stageRect.top};
 
       // Seed the initial box from the auto-detect heuristic (best-guess
       // starting point only -- user still confirms/adjusts it visually).
@@ -1000,8 +1021,13 @@ function openCropModal(img,dataUrl){
 
 function cropRenderRect(){
   var r=ge('cropRect');
-  r.style.left=CROP_STATE.x+'px';
-  r.style.top=CROP_STATE.y+'px';
+  // offX/offY shift the box from image-relative coords into stage-relative
+  // CSS position (see the letterbox bug writeup in openCropModal above) --
+  // default to 0 defensively in case this ever runs before CROP_STATE is
+  // fully initialized.
+  var offX=CROP_STATE.offX||0,offY=CROP_STATE.offY||0;
+  r.style.left=(CROP_STATE.x+offX)+'px';
+  r.style.top=(CROP_STATE.y+offY)+'px';
   r.style.width=CROP_STATE.w+'px';
   r.style.height=CROP_STATE.h+'px';
 }

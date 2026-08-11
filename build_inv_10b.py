@@ -216,8 +216,9 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   <div class="nt"><img class="nt-logo" src="upstream_logo.png" alt="Upstream Facility Services"><div class="nt-text"><span>Region 10B</span><span class="nt-sub">Global Search</span></div></div>
   <div class="sw"><span class="si">&#128269;</span>
     <input id="srch" type="text" placeholder="Search part, tech, role, manager, location, mfr, date&#8230;" autocomplete="off">
-    <button class="camf" id="camBtn" title="Search by Photo" onclick="document.getElementById('camInp').click()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.4"/></svg></button>
+    <button class="camf" id="camBtn" title="Search by Photo" onclick="pmOpenSourcePicker()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l1.5-2h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.4"/></svg></button>
     <input type="file" id="camInp" accept="image/*" capture="environment" style="display:none" onchange="onPhotoPick(event)">
+    <input type="file" id="camInpLib" accept="image/*" style="display:none" onchange="onPhotoPick(event)">
   </div>
   <div class="hc"><select class="hsel" id="rmSel" onchange="sRM(this.value)"></select></div>
   <div class="hc"><select class="hsel" id="mgrSel" onchange="sMGR(this.value)"></select></div>
@@ -320,6 +321,16 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
     <button class="aim-btn" onclick="aimTriggerCamera()">Take Photo</button>
     <button class="aim-btn" onclick="aimTriggerLibrary()">Choose from Library</button>
     <button class="aim-btn cancel" onclick="aimClosePicker()">Cancel</button>
+  </div>
+</div>
+
+<div class="aim-overlay hid" id="pm-source-picker" onclick="pmCloseSourcePicker()">
+  <div class="aim-box" onclick="event.stopPropagation()">
+    <div class="aim-title">Search by Photo</div>
+    <div class="aim-sub">Take a new photo or pick one from your library</div>
+    <button class="aim-btn" onclick="pmTriggerCamera()">Take Photo</button>
+    <button class="aim-btn" onclick="pmTriggerLibrary()">Choose from Library</button>
+    <button class="aim-btn cancel" onclick="pmCloseSourcePicker()">Cancel</button>
   </div>
 </div>
 
@@ -918,6 +929,21 @@ function pmCosineSimQuantized(queryVec,q,scale){
 // it before running the match -- a couple seconds of user input in
 // exchange for a huge, verifiable accuracy improvement.
 var CROP_STATE=null; // {img, natW, natH, dispW, dispH, x,y,w,h (in DISPLAY px), drag:{...}}
+
+function pmOpenSourcePicker(){
+  ge('pm-source-picker').classList.remove('hid');
+}
+function pmCloseSourcePicker(){
+  ge('pm-source-picker').classList.add('hid');
+}
+function pmTriggerCamera(){
+  pmCloseSourcePicker();
+  ge('camInp').click();
+}
+function pmTriggerLibrary(){
+  pmCloseSourcePicker();
+  ge('camInpLib').click();
+}
 
 function onPhotoPick(evt){
   var file=evt.target.files&&evt.target.files[0];

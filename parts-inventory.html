@@ -9,6 +9,12 @@ body.light{--bg:#f6f8fa;--s1:#fff;--s2:#f6f8fa;--bd:#d0d7de;--tx:#1f2328;--sub:#
 body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:13px;min-height:100vh}
 /* NAV */
 nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+@media(max-width:900px){
+  nav{transition:transform .25s ease}
+  .fbar{transition:top .25s ease}
+  body.nav-hidden nav{transform:translateY(-100%)}
+  body.nav-hidden .fbar{top:0}
+}
 .nav-title{font-weight:700;font-size:1rem;color:#fff;white-space:nowrap;display:flex;align-items:center;gap:10px}
 .nav-logo{height:44px;width:auto;display:block}
 .nav-title-text{display:flex;flex-direction:column;line-height:1.15}
@@ -148,7 +154,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
     <button class="srch-clr" onclick="clearSearch()" title="Clear search">✕</button>
   </div>
   <div class="nav-r">
-    <a href="index.html?v=1786727876" title="Home" class="nbtn" style="text-decoration:none"><img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt=""> Home</a><a href="10b-inventory.html?v=1786727876" class="nbtn" style="text-decoration:none">&#128269; Global Search</a><button class="nbtn" onclick="copyLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
+    <a href="index.html?v=1786729492" title="Home" class="nbtn" style="text-decoration:none"><img src="assets/walmart_spark.png" width="22" height="20" style="display:block;object-fit:contain" alt=""> Home</a><a href="10b-inventory.html?v=1786729492" class="nbtn" style="text-decoration:none">&#128269; Global Search</a><button class="nbtn" onclick="copyLink(this)" title="Copy share link"><svg width="16" height="16" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="#ffc220"/><circle cx="8.5" cy="10" r="1.4" fill="#1a1a1a"/><circle cx="15.5" cy="10" r="1.4" fill="#1a1a1a"/><path d="M7.5 14.5c1 1.6 2.7 2.5 4.5 2.5s3.5-.9 4.5-2.5" stroke="#1a1a1a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg> Share</button>
     <button class="nbtn" onclick="toggleTheme()" title="Toggle light/dark"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2 12h2.5M19.5 12H22M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/></svg></button>
   </div>
 </nav>
@@ -622,5 +628,7 @@ document.getElementById('srch').addEventListener('input',applyFilters);
 
 // initial stats
 applyFilters();
+
+(function(){var MW=900,TP=8,lastY=window.scrollY,ticking=false;function onScroll(){if(window.innerWidth>MW){document.body.classList.remove('nav-hidden');ticking=false;return;}var y=window.scrollY;if(y<=TP){document.body.classList.remove('nav-hidden');}else if(y>lastY){document.body.classList.add('nav-hidden');}else if(y<lastY){document.body.classList.remove('nav-hidden');}lastY=y;ticking=false;}window.addEventListener('scroll',function(){if(!ticking){requestAnimationFrame(onScroll);ticking=true;}},{passive:true});})();
 </script>
 </body></html>

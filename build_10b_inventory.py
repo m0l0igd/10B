@@ -273,6 +273,60 @@ def load_enriched_by_item_id():
 # ---------------------------------------------------------------------------
 # Hierarchy & Mapping Config
 # ---------------------------------------------------------------------------
+# Per-technician and per-store city/state coverage (for the sidebar tech
+# list on each sub-market dashboard -- shows where each tech's assigned
+# stores actually are, e.g. "Chandler, AZ, Mesa, AZ" under their name).
+# Derived from semantic_fs_store_alignment (store_number/store_address +
+# every technician-role name column: GM, HVACR, FE, electrician, plumber,
+# door, generator, etc.) via get_tech_cities.py -- re-run that script and
+# these two JSON files will be picked up fresh next build if store/tech
+# assignments change. tech_cities.json covers ~96% of tech names seen in
+# the actual inventory data by direct name match; store_cities.json is a
+# fallback keyed by bare store number, used for the 'WM#1234'-style
+# placeholder "techs" (which are really just unassigned store locations,
+# not real people) so they still get a real city instead of nothing.
+TECH_CITIES_FILE = r"C:\Users\Public\10B\tech_cities.json"
+STORE_CITIES_FILE = r"C:\Users\Public\10B\store_cities.json"
+
+
+def load_tech_cities():
+    try:
+        with open(TECH_CITIES_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def load_store_cities():
+    try:
+        with open(STORE_CITIES_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return {}
+
+
+def resolve_tech_city(tech_display, sub, tech_cities, store_cities):
+    """Best-effort city/state string for a tech's sidebar entry, in
+    priority order:
+      1. Direct name match in tech_cities (real person, found in the
+         store-alignment roster under ANY trade's technician column).
+      2. 'WM#1234'-style placeholder (an unassigned store location, not a
+         real tech -- see the tech.title() logic upstream) -- look up that
+         bare store number in store_cities.
+      3. Fall back to the whole sub-market's city list (SUB_MARKET_CITIES)
+         -- covers 'Store Inventory', terminated/inactive techs no longer
+         in the alignment snapshot, and any other edge case. Still more
+         useful than blank, just less precise than #1/#2.
+    """
+    if tech_display in tech_cities:
+        return ', '.join(tech_cities[tech_display])
+    if tech_display.startswith('WM#'):
+        store_no = tech_display[3:]
+        if store_no in store_cities:
+            return store_cities[store_no]
+    return ', '.join(SUB_MARKET_CITIES.get(sub, [])) or ''
+
+
 HIER = {
     '366-A': {'mgr':'Antonio Vasquez',   'reg_mgr':'Israel Pino'},
     '367-A': {'mgr':'Michael Leanox',    'reg_mgr':'Israel Pino'},
@@ -447,6 +501,9 @@ def build_inventory_portal():
     print(f"Loaded {len(embeddings_cache)} precomputed photo embeddings for Search by Photo...")
     avg_colors_cache = load_avg_colors_cache()
     print(f"Loaded {len(avg_colors_cache)} precomputed average colors for color-aware photo matching...")
+    tech_cities = load_tech_cities()
+    store_cities = load_store_cities()
+    print(f"Loaded {len(tech_cities)} tech->city mappings and {len(store_cities)} store->city mappings for sidebar location display...")
     # Merge color data directly into the embeddings dict as a "c" field per
     # pno, so the page fetches both in a single request (catalog_embeddings.json).
     for pno, color in avg_colors_cache.items():
@@ -625,7 +682,8 @@ def build_inventory_portal():
             mgr_tech_map[k]['area_total'] = p['area_total']
             
         mgr_tech_summary = sorted([{"tech":k,"role":v['role'],"area":v['area'],"items":v['items'],
-                                    "value":round(v['value'],2)} for k,v in mgr_tech_map.items()],
+                                    "value":round(v['value'],2),
+                                    "city":resolve_tech_city(k, sub, tech_cities, store_cities)} for k,v in mgr_tech_map.items()],
                                    key=lambda x:-x['value'])
 
         mgr_payload = json.dumps({"parts":mgr_parts,"techs":mgr_tech_summary,"no_inv":[]},

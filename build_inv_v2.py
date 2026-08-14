@@ -73,6 +73,7 @@ nav{background:var(--wmt);padding:6px 20px;display:flex;align-items:center;gap:1
 .sb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
 .sb-info{flex:1;min-width:0}
 .sb-name{font-size:.72rem;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.sb-city{font-size:.62rem;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .sb-bar-wrap{height:3px;background:var(--bd);border-radius:2px;margin-top:3px;overflow:hidden}
 .sb-bar{height:100%;border-radius:2px}
 .sb-ct{font-size:.65rem;color:var(--sub);flex-shrink:0}
@@ -384,10 +385,12 @@ function buildSidebar(){
     const pct=Math.round(t.value/maxV*100);
     const col=ROLE_COL[t.role]||'#bc8cff';
     const lowCls=t.items<LOW_ITEM_THRESHOLD?' low':'';
+    const cityHtml=t.city?`<div class="sb-city" title="${t.city}">${t.city}</div>`:'';
     return`<div class="sb-row" data-tech="${t.tech}" onclick="techFilter('${t.tech.replace(/'/g,"\\'")}')">
       <div class="sb-dot" style="background:${col}"></div>
       <div class="sb-info">
         <div class="sb-name" title="${t.tech}">${t.tech}</div>
+        ${cityHtml}
         <div class="sb-bar-wrap"><div class="sb-bar" style="width:${pct}%;background:${col}"></div></div>
       </div>
       <div class="sb-ct${lowCls}">${t.items}</div>

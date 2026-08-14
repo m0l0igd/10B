@@ -293,6 +293,34 @@ HIER = {
 
 MGR_TO_SUB = {v['mgr'].upper(): k for k, v in HIER.items()}
 
+# Cities/states each sub-market's stores fall in, for display on the hub
+# page (index.html) so each FS Manager's card shows the geography they
+# actually cover. Sourced from semantic_fs_store_alignment.store_address
+# (cleaner/more complete than the parts-inventory table's address field --
+# e.g. it has active-store coverage for 369-B, which the parts-inventory
+# table has zero store_address rows for since all its rows there are
+# vehicle/van-aligned, not store-aligned). Static like HIER above since
+# sub-market store geography changes rarely; re-derive by re-running the
+# one-off query in get_sub_market_cities2.py (see kennel notes) if a new
+# sub-market is added or a market gets a new store.
+SUB_MARKET_CITIES = {
+    '366-A': ['Casa Grande, AZ', 'Douglas, AZ', 'Green Valley, AZ', 'Marana, AZ', 'Nogales, AZ', 'Oro Valley, AZ', 'Tucson, AZ'],
+    '367-A': ['Benson, AZ', 'Safford, AZ', 'Sierra Vista, AZ', 'Tucson, AZ'],
+    '368-A': ['Avondale, AZ', 'Buckeye, AZ', 'Glendale, AZ', 'Goodyear, AZ', 'Litchfield Park, AZ', 'Peoria, AZ', 'Phoenix, AZ', 'Surprise, AZ'],
+    '369-A': ['Glendale, AZ', 'Phoenix, AZ'],
+    '369-B': ['El Mirage, AZ', 'Glendale, AZ', 'Peoria, AZ'],
+    '370-A': ['Anthem, AZ', 'Cave Creek, AZ', 'Phoenix, AZ'],
+    '371-A': ['Chandler, AZ', 'Gilbert, AZ', 'Mesa, AZ', 'Phoenix, AZ', 'Tempe, AZ'],
+    '372-A': ['Apache Junction, AZ', 'Claypool, AZ', 'Mesa, AZ', 'Scottsdale, AZ'],
+    '373-A': ['Chandler, AZ', 'Coolidge, AZ', 'Gilbert, AZ', 'Maricopa, AZ', 'Mesa, AZ', 'Queen Creek, AZ', 'San Tan Valley, AZ'],
+    '375-A': ['Alamosa, CO', 'Cortez, CO', 'Durango, CO', 'Espanola, NM', 'Farmington, NM', 'Las Vegas, NM', 'Pagosa Springs, CO', 'Taos, NM'],
+    '384-A': ['Alameda, NM', 'Albuquerque, NM', 'Belen, NM', 'Gallup, NM', 'Grants, NM', 'Los Lunas, NM', 'Rio Rancho, NM', 'Socorro, NM'],
+    '385-A': ['Albuquerque, NM', 'Bernalillo, NM', 'Rio Rancho, NM', 'Santa Fe, NM'],
+    '385-B': ['Albuquerque, NM', 'Edgewood, NM'],
+    '387-A': ['Deming, NM', 'Las Cruces, NM', 'Silver City, NM', 'Truth Or Consequences, NM'],
+    '387-B': ['Alamogordo, NM', 'Artesia, NM', 'Carlsbad, NM', 'Las Cruces, NM', 'Roswell, NM', 'Ruidoso Downs, NM'],
+}
+
 # Raw fs_manager_name sometimes rolls up to the REGIONAL manager's own name
 # (data quality issue upstream) instead of being genuinely blank -- e.g.
 # fs_manager_name='ISRAEL PINO' on rows that are actually his own RM-level
@@ -668,6 +696,7 @@ h1{{font-size:1.4rem;font-weight:800;color:#fff;margin-bottom:6px}}
 .card:hover{{border-color:#58a6ff}}
 .ct{{font-size:.9rem;font-weight:700;margin-bottom:3px;color:#e9bf3f}}
 .cs{{font-size:.7rem;color:#8b949e;margin-bottom:8px}}
+.cc{{font-size:.65rem;color:#6e7681;margin-bottom:8px;line-height:1.35}}
 .cd{{display:flex;gap:14px}}
 .sv{{text-align:center}}.sv-v{{font-size:1.1rem;font-weight:800;color:#e6edf3}}.sv-l{{font-size:.58rem;color:#8b949e;text-transform:uppercase;letter-spacing:.05em}}
 footer{{margin-top:28px;font-size:.65rem;color:#8b949e;border-top:1px solid #30363d;padding-top:12px}}
@@ -718,10 +747,12 @@ window.onerror = function(message, source, lineno, colno, error) {{
         for mgr_name, sub, out_file, count in sorted(RM_EXISTING[rm], key=lambda x: x[1]):
             # Sum dynamic total cost
             mgr_val = sum(p['tcost'] for p in parts if p['mgr'] == mgr_name)
+            cities_str = ', '.join(SUB_MARKET_CITIES.get(sub, [])) or 'No store data'
             hub_html += f"""
             <a class="card" href="{out_file}">
                 <div class="ct">{mgr_name}</div>
                 <div class="cs">{sub}</div>
+                <div class="cc">{cities_str}</div>
                 <div class="cd">
                     <div class="sv"><div class="sv-v">{count}</div><div class="sv-l">Items</div></div>
                     <div class="sv" style="margin-left:auto"><div class="sv-v">${mgr_val/1000:.0f}K</div><div class="sv-l">Value</div></div>

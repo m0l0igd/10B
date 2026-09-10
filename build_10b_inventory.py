@@ -554,7 +554,13 @@ def build_inventory_portal():
         else:
             display = tech.title()
         tc = round(r.tcost, 2) if r.tcost else 0.0
-        if tc <= 0:
+        qty_val = int(r.qty) if r.qty else 0
+        # Only drop true phantom rows (no physical quantity on hand).
+        # Previously this filtered on tc <= 0, which silently hid real
+        # inventory that Zeus has qty for but no cost recorded (e.g.
+        # freebies/warranty parts) -- caused dashboard counts to under-
+        # report vs. Zeus Materials Management for affected techs.
+        if qty_val <= 0:
             continue
 
         # BUG WORKAROUND (upstream data issue, not ours -- see

@@ -277,7 +277,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
   </div>
 </div>
 <div class="sts">
-  <div class="sc"><div class="sv" id="si">-</div><div class="sl">Line Items</div></div>
+  <div class="sc"><div class="sv" id="si">-</div><div class="sl">Total Qty</div></div>
   <div class="sc"><div class="sv" id="sv">-</div><div class="sl">Total Value</div></div>
   <div class="sc"><div class="sv" id="sc2">-</div><div class="sl">Technicians</div></div>
   <div class="sc"><div class="sv" id="sm">-</div><div class="sl">FS Managers</div></div>
@@ -539,11 +539,11 @@ function rH(p,i){
 function tX(sl){var x=ge('x'+sl);if(x)x.classList.toggle('hid');}
 
 function uS(){
-  var vis=filtered.length,val=0,ts={},ms={},ls={},rc=0;
+  var vis=filtered.length,val=0,qtySum=0,ts={},ms={},ls={},rc=0;
   filtered.forEach(function(p){
-    val+=p[TC];ts[p[TI]]=1;ms[p[MI]]=1;ls[p[AR]]=1;if(p[RE]==='Y')rc++;
+    val+=p[TC];qtySum+=(p[QT]||0);ts[p[TI]]=1;ms[p[MI]]=1;ls[p[AR]]=1;if(p[RE]==='Y')rc++;
   });
-  ge('si').textContent=vis.toLocaleString();ge('sv').textContent=fK(val);
+  ge('si').textContent=qtySum.toLocaleString();ge('sv').textContent=fK(val);
   ge('sc2').textContent=Object.keys(ts).length;ge('sm').textContent=Object.keys(ms).length;
   ge('sl2').textContent=Object.keys(ls).length;ge('srp').textContent=rc;
   ge('fc').textContent=vis<R.parts.length?vis.toLocaleString()+' of '+R.parts.length.toLocaleString()+' shown':'';

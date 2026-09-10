@@ -185,7 +185,7 @@ footer{border-top:1px solid var(--bd);padding:10px 20px;font-size:.63rem;color:v
 
 <!-- STATS (updated in-place) -->
 <div class="stats">
-  <div class="stat"><div class="stat-v" id="st-items">—</div><div class="stat-l">Line Items</div></div>
+  <div class="stat"><div class="stat-v" id="st-items">—</div><div class="stat-l">Total Qty</div></div>
   <div class="stat"><div class="stat-v" id="st-val">—</div><div class="stat-l">Total Value</div></div>
   <div class="stat"><div class="stat-v" id="st-techs">—</div><div class="stat-l">Technicians</div></div>
   <div class="stat"><div class="stat-v" id="st-locs">—</div><div class="stat-l">Locations</div></div>
@@ -344,7 +344,7 @@ function buildRows(){
 function applyFilters(){
   const q=document.getElementById('srch').value.trim().toLowerCase();
   const rows=document.querySelectorAll('tr.data-row');
-  let vis=0,val=0,techSet=new Set(),locSet=new Set(),repCt=0;
+  let vis=0,val=0,qtySum=0,techSet=new Set(),locSet=new Set(),repCt=0;
 
   rows.forEach(row=>{
     const expRow=document.getElementById('exp-'+row.dataset.sl);
@@ -361,14 +361,14 @@ function applyFilters(){
       vis++;
       const idx=row.rowIndex-1; // rough — use data instead
       const p=D.parts.find(p=>p.id===row.querySelector('.c-id').textContent);
-      if(p){val+=p.tcost;if(p.rep==='Y')repCt++;}
+      if(p){val+=p.tcost;qtySum+=(p.qty||0);if(p.rep==='Y')repCt++;}
       techSet.add(row.dataset.tech);
       locSet.add(row.querySelector('.c-area').textContent);
     }
   });
 
   // stats
-  document.getElementById('st-items').textContent=vis.toLocaleString();
+  document.getElementById('st-items').textContent=qtySum.toLocaleString();
   document.getElementById('st-val').textContent=fmt$(val);
   document.getElementById('st-techs').textContent=techSet.size;
   document.getElementById('st-locs').textContent=locSet.size;

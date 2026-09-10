@@ -611,7 +611,7 @@ def build_inventory_portal():
     tech_map = defaultdict(lambda:{"items":0,"value":0.0,"area":"","role":"","mgr":"","rm":"","sub":""})
     for p in parts:
         k = (p['mgr'], p['tech'])
-        tech_map[k]['items'] += 1
+        tech_map[k]['items'] += p['qty']
         tech_map[k]['value']  = round(tech_map[k]['value'] + p['tcost'], 2)
         tech_map[k]['area']   = p['area']
         tech_map[k]['role']   = p['role']
@@ -681,7 +681,7 @@ def build_inventory_portal():
         mgr_tech_map = defaultdict(lambda:{"items":0,"value":0.0,"area":"","role":"","area_total":0})
         for p in mgr_parts:
             k = p['tech']
-            mgr_tech_map[k]['items'] += 1
+            mgr_tech_map[k]['items'] += p['qty']
             mgr_tech_map[k]['value']  = round(mgr_tech_map[k]['value'] + p['tcost'], 2)
             mgr_tech_map[k]['area']   = p['area']
             mgr_tech_map[k]['role']   = p['role']
@@ -732,7 +732,7 @@ def build_inventory_portal():
         except Exception:
             pass
             
-        results_summary.append((mgr_name, sub, out_filename, len(mgr_parts)))
+        results_summary.append((mgr_name, sub, out_filename, sum(p['qty'] for p in mgr_parts)))
 
     # STEP 5 - Generate Hub (index.html) organized by Regional Manager
     RM_ORDER = ['Israel Pino', 'Christopher Fuentes', 'Ralph Vasquez', 'Gabe Macias']
@@ -818,7 +818,7 @@ window.onerror = function(message, source, lineno, colno, error) {{
                 <div class="cs">{sub}</div>
                 <div class="cc">{cities_str}</div>
                 <div class="cd">
-                    <div class="sv"><div class="sv-v">{count}</div><div class="sv-l">Items</div></div>
+                    <div class="sv"><div class="sv-v">{count}</div><div class="sv-l">Total Qty</div></div>
                     <div class="sv" style="margin-left:auto"><div class="sv-v">${mgr_val/1000:.0f}K</div><div class="sv-l">Value</div></div>
                 </div>
             </a>

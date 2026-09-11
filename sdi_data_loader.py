@@ -35,6 +35,7 @@ BASE_DIR = Path(__file__).parent
 SDI_RAW_FILE = BASE_DIR / "sdi_scraper" / "sdi_inventory_raw.json"
 COST_LOOKUP_FILE = BASE_DIR / "cost_lookup.json"
 TECH_TO_MGR_FILE = BASE_DIR / "tech_to_manager.json"
+MANUAL_OVERRIDES_FILE = BASE_DIR / "manual_tech_manager_overrides.json"
 
 # Trucks that have physically moved to a team outside Region 10B but whose
 # old inventory rows are still lingering under the tech's name in SDI.
@@ -82,11 +83,16 @@ def load_parts_from_sdi(hier, mgr_to_sub):
               "fall back to their scraped subregion's default manager, "
               "which is known to be wrong for techs whose truck geography "
               "doesn't match their org chart. Run build_tech_manager_lookup.py.")
+    manual_overrides = {}
+    if MANUAL_OVERRIDES_FILE.exists():
+        raw_overrides = json.loads(MANUAL_OVERRIDES_FILE.read_text(encoding="utf-8"))
+        manual_overrides = {k.upper(): v for k, v in raw_overrides.items()}
 
     parts = []
     excluded_count = 0
     unmatched_cost_count = 0
     fallback_mgr_count = 0
+    manual_override_count = 0
 
     for sub_queried, rows in raw.items():
         default_h = hier.get(sub_queried)
@@ -116,7 +122,16 @@ def load_parts_from_sdi(hier, mgr_to_sub):
             # One exception is unambiguous: if the "tech" IS one of our
             # 15 known managers (several of them carry their own truck),
             # they obviously manage themselves -- no lookup needed.
-            if tech.upper() in mgr_to_sub:
+            override_mgr = manual_overrides.get(tech.upper())
+            if override_mgr and override_mgr.upper() in mgr_to_sub:
+                # Human-confirmed ground truth -- beats every other source,
+                # including BigQuery, since Mike knows his own org chart
+                # better than a stale semantic table does.
+                mgr = override_mgr
+                sub = mgr_to_sub[override_mgr.upper()]
+                h = hier[sub]
+                manual_override_count += 1
+            elif tech.upper() in mgr_to_sub:
                 sub = mgr_to_sub[tech.upper()]
                 h = hier[sub]
                 mgr = h["mgr"]
@@ -178,6 +193,7 @@ def load_parts_from_sdi(hier, mgr_to_sub):
     print(f"SDI loader: {len(parts)} usable rows "
           f"({excluded_count} excluded via EXCLUDED_TRUCK_IDS, "
           f"{unmatched_cost_count} with no cost match -> $0, "
+          f"{manual_override_count} via manual_tech_manager_overrides.json, "
           f"{fallback_mgr_count} with no BigQuery manager record -> "
           f"used subregion default as a best guess)")
     return parts

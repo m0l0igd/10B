@@ -615,7 +615,7 @@ def build_inventory_portal():
         })
 
     if use_sdi:
-        parts = sdi_data_loader.load_parts_from_sdi(HIER)
+        parts = sdi_data_loader.load_parts_from_sdi(HIER, MGR_TO_SUB)
         for p in parts:
             pno_upper = p['pno'].upper()
             p['img'] = (manual_imgs.get(pno_upper)

@@ -5,6 +5,7 @@ import time
 from collections import defaultdict
 from google.cloud import bigquery
 from google.oauth2.service_account import Credentials
+import sdi_data_loader
 
 # ---------------------------------------------------------------------------
 # ZEUS image/description enrichment (populated incrementally by
@@ -441,14 +442,20 @@ def get_bigquery_client():
 def build_inventory_portal():
     print(f"[{time.strftime('%X')}] Starting up-to-the-minute 10B Parts Inventory build...")
     
-    client = get_bigquery_client()
-    if not client:
-        print("Error: BigQuery client not available. Please verify credentials!")
-        return
+    use_sdi = sdi_data_loader.sdi_export_available()
+    if use_sdi:
+        print("Found a scraped SDI Zeus export (sdi_scraper/sdi_inventory_raw.json) --")
+        print("using it as the source of truth instead of the BigQuery semantic layer.")
+        rows = []  # SDI parts are built directly further down; nothing to loop over here.
+    else:
+        client = get_bigquery_client()
+        if not client:
+            print("Error: BigQuery client not available. Please verify credentials!")
+            return
 
-    # STEP 1 - Query BigQuery for all 15 sub-markets
-    print("Querying semantic_fs_zeus_parts_inventory from BigQuery...")
-    query = """
+        # STEP 1 - Query BigQuery for all 15 sub-markets
+        print("Querying semantic_fs_zeus_parts_inventory from BigQuery...")
+        query = """
     SELECT
       fs_sub_market,
       COALESCE(fs_manager_name,'')          AS fs_mgr,
@@ -484,9 +491,9 @@ def build_inventory_portal():
     ORDER BY fs_sub_market, tech, tcost DESC
     """
     
-    query_job = client.query(query)
-    rows = list(query_job.result())
-    print(f"Successfully retrieved {len(rows)} parts inventory rows!")
+        query_job = client.query(query)
+        rows = list(query_job.result())
+        print(f"Successfully retrieved {len(rows)} parts inventory rows!")
 
     # STEP 2 - Parse and Clean Technicians/Managers
     enriched = load_enriched_parts()
@@ -606,6 +613,14 @@ def build_inventory_portal():
             "goh":  int(r.goh) if r.goh else 0,
             "img":  _img,
         })
+
+    if use_sdi:
+        parts = sdi_data_loader.load_parts_from_sdi(HIER)
+        for p in parts:
+            pno_upper = p['pno'].upper()
+            p['img'] = (manual_imgs.get(pno_upper)
+                        or (enriched.get(pno_upper) or {}).get('image_url')
+                        or '')
 
     # Group tech summaries dynamically based on correct manager alignments!
     tech_map = defaultdict(lambda:{"items":0,"value":0.0,"area":"","role":"","mgr":"","rm":"","sub":""})

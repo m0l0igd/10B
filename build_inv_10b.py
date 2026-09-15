@@ -358,6 +358,31 @@ try{
 var SI=0,RI=1,MI=2,TI=3,ROI=4,AR=5,ID=6,DS=7,MF=8,PN=9,QT=10,UC=11,TC=12,AT=13,RP=14,MQ=15,RE=16,PU=17,LO=18,GO=19,FD=20,IMG=21;
 var R=_D;
 var RMSV=R.rms,MGRSV=R.mgrs,TECHSV=R.techs,SUBSV=R.subs,ROLESV=R.roles;
+
+// -- EQUIVALENT / CROSS-REFERENCE PART NUMBERS (from Zeus) --
+// R.equiv is {canonicalPno: [alt1, alt2, ...]}, built by build_10b_inventory.py
+// from sdi_scraper/equivalent_parts.json (safe empty object if that file
+// hasn't been populated yet -- see backfill_equivalent_parts.py). Search
+// needs the REVERSE lookup (typed number -> which canonical inventory part
+// it belongs to), so we invert it once here rather than scanning every
+// part's equivalents list on every keystroke.
+function normPN(s){return String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');}
+var EQUIV_INDEX={}; // normalized alt part# -> [canonical pno, ...]
+(function(){
+  var em=R.equiv||{};
+  Object.keys(em).forEach(function(canon){
+    (em[canon]||[]).forEach(function(alt){
+      var na=normPN(alt);
+      if(!na)return;
+      if(!EQUIV_INDEX[na])EQUIV_INDEX[na]=[];
+      if(EQUIV_INDEX[na].indexOf(canon)===-1)EQUIV_INDEX[na].push(canon);
+    });
+  });
+})();
+function equivDisplay(pno){
+  var list=(R.equiv||{})[String(pno||'').toUpperCase()];
+  return list&&list.length?esc(list.join(', ')):'';
+}
 var PG=150,F={rm:'',mgr:'',tech:'',role:'',rep:'',img:false,noimg:false},SRT={c:13,a:false},filtered=[],page=0;
 var photoMatchActive=false,photoMatchSimByPno=null;
 // "Narrow it down" -- optional manufacturer/keyword filters applied ON TOP
@@ -466,6 +491,19 @@ function af(){
         var terms=SYNS[w]?[w].concat(SYNS[w]):[w];
         var found=false;
         for(var ti=0;ti<terms.length;ti++){if(h.indexOf(terms[ti])>=0){found=true;break;}}
+        // Fall back to Zeus equivalent/cross-reference part numbers: if the
+        // typed word doesn't literally appear anywhere on this row but IS a
+        // known alternate/supplier part# for THIS row's own part#, count it
+        // as a match (this is what lets searching "246800" surface a part
+        // whose canonical Part # is "830-00114-01", since Zeus lists 246800
+        // as an equivalent for it).
+        if(!found){
+          var nw=normPN(w);
+          if(nw){
+            var eqMatches=EQUIV_INDEX[nw];
+            if(eqMatches&&eqMatches.indexOf(normPN(p[PN]))!==-1)found=true;
+          }
+        }
         if(!found)return false;
       }
     }
@@ -518,6 +556,7 @@ function rH(p,i){
     +'<div class="ec" style="grid-column:1/-1"><div class="el">Full Description</div><div class="ev" style="font-size:.78rem;font-weight:500">'+esc(p[FD]||p[DS]||'—')+'</div></div>'
     +'<div class="ec"><div class="el">Regional Mgr</div><div class="ev" style="font-size:.8rem">'+esc(rm)+'</div><div class="es">Sub: '+esc(sub)+'</div></div>'
     +'<div class="ec"><div class="el">Manufacturer</div><div class="ev" style="font-size:.78rem">'+esc(p[MF])+'</div><div class="es">Part#: '+esc(p[PN])+' - '+role+'</div></div>'
+    +(equivDisplay(p[PN])?'<div class="ec" style="grid-column:1/-1"><div class="el">Equivalent / Cross-Ref Part #s (Zeus)</div><div class="ev" style="font-size:.72rem;font-family:monospace;font-weight:500">'+equivDisplay(p[PN])+'</div></div>':'')
     +'<div class="ec"><div class="el">Reorder Pt</div><div class="ev'+(p[RP]>0?' ok':'')+'">'+fN(p[RP])+'</div><div class="es">Max: '+fN(p[MQ])+'</div></div>'
     +'<div class="ec"><div class="el">Global OH</div><div class="ev">'+fN(p[GO])+'</div></div>'
     +'<div class="ec"><div class="el">Last Putaway</div><div class="ev" style="font-size:.78rem">'+esc(p[PU])+'</div></div>'

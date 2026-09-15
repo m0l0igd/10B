@@ -36,6 +36,14 @@ SDI_RAW_FILE = BASE_DIR / "sdi_scraper" / "sdi_inventory_raw.json"
 COST_LOOKUP_FILE = BASE_DIR / "cost_lookup.json"
 TECH_TO_MGR_FILE = BASE_DIR / "tech_to_manager.json"
 MANUAL_OVERRIDES_FILE = BASE_DIR / "manual_tech_manager_overrides.json"
+# Built by build_tech_trade_lookup.py from semantic_fs_zeus_parts (work-order
+# table) since semantic_fs_zeus_parts_inventory's own vehicle_tech_role
+# column started returning NULL for every 10B row (found 2026-09). That
+# table's gm_technician_name/hvacr_technician_name/food_equipment_
+# technician_name columns are a STORE-level trade roster, not a per-part
+# tag, but voting the most common trade per tech name gets a solid
+# per-technician GM/HVACR/FE classification back for the role filter.
+TECH_TO_TRADE_FILE = BASE_DIR / "tech_to_trade.json"
 
 # Trucks that have physically moved to a team outside Region 10B but whose
 # old inventory rows are still lingering under the tech's name in SDI.
@@ -87,6 +95,13 @@ def load_parts_from_sdi(hier, mgr_to_sub):
     if MANUAL_OVERRIDES_FILE.exists():
         raw_overrides = json.loads(MANUAL_OVERRIDES_FILE.read_text(encoding="utf-8"))
         manual_overrides = {k.upper(): v for k, v in raw_overrides.items()}
+    tech_to_trade = {}
+    if TECH_TO_TRADE_FILE.exists():
+        tech_to_trade = json.loads(TECH_TO_TRADE_FILE.read_text(encoding="utf-8"))
+    else:
+        print("WARNING: tech_to_trade.json not found -- every tech will show "
+              "up as role='Tech' with no GM/HVACR/FE classification. Run "
+              "build_tech_trade_lookup.py.")
 
     parts = []
     excluded_count = 0
@@ -168,7 +183,7 @@ def load_parts_from_sdi(hier, mgr_to_sub):
                 "rm": rm,
                 "mgr": mgr,
                 "tech": tech,
-                "role": "Tech",
+                "role": tech_to_trade.get(tech.upper(), "Tech"),
                 "area": location,
                 "loc": location,
                 "id": "",
@@ -190,10 +205,12 @@ def load_parts_from_sdi(hier, mgr_to_sub):
                 "img": "",
             })
 
+    trade_tagged_count = sum(1 for p in parts if p["role"] != "Tech")
     print(f"SDI loader: {len(parts)} usable rows "
           f"({excluded_count} excluded via EXCLUDED_TRUCK_IDS, "
           f"{unmatched_cost_count} with no cost match -> $0, "
           f"{manual_override_count} via manual_tech_manager_overrides.json, "
           f"{fallback_mgr_count} with no BigQuery manager record -> "
-          f"used subregion default as a best guess)")
+          f"used subregion default as a best guess, "
+          f"{trade_tagged_count} rows tagged GM/HVACR/FE via tech_to_trade.json)")
     return parts

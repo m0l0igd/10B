@@ -27,6 +27,14 @@ ENRICHED_BY_DESCRIPTION_FILE = r"C:\Users\Public\10B\sdi_scraper\enriched_by_des
 # These take priority over ZEUS results since a human curated them.
 MANUAL_OVERRIDES_FILE = r"C:\Users\Public\10B\sdi_scraper\manual_overrides.json"
 
+# Zeus "Equivalent Parts" cross-reference numbers per part, scraped by
+# sdi_scraper/backfill_equivalent_parts.py (safe no-op / empty dict if that
+# file doesn't exist yet -- lets the global search box recognize an
+# alternate supplier's part# for the same physical item, e.g. searching
+# "246800" surfacing a row whose own Part # is "830-00114-01" because
+# Zeus lists 246800 as an equivalent for it). Keyed by uppercased part#.
+EQUIVALENT_PARTS_FILE = r"C:\Users\Public\10B\sdi_scraper\equivalent_parts.json"
+
 # Precomputed MobileNetV2 image-embedding cache for every catalog part
 # image, built by sdi_scraper/compute_embeddings_shard.py (+ merge script).
 # This replaced an earlier dHash-based approach that was too coarse (only
@@ -195,6 +203,18 @@ def load_manual_overrides():
         with open(MANUAL_OVERRIDES_FILE, encoding="utf-8") as f:
             raw = json.load(f)
         return {k.upper(): v for k, v in raw.items() if v and not k.startswith('_')}
+    except Exception:
+        return {}
+
+
+def load_equivalent_parts():
+    """Returns {PNO_UPPER: [alt_part_no, ...]} from equivalent_parts.json.
+    Safe empty dict if the file doesn't exist yet (backfill hasn't run) or
+    is malformed -- this feature must never be able to break the build."""
+    try:
+        with open(EQUIVALENT_PARTS_FILE, encoding="utf-8") as f:
+            raw = json.load(f)
+        return {k.upper(): v for k, v in raw.items() if v}
     except Exception:
         return {}
 
@@ -442,20 +462,26 @@ def get_bigquery_client():
 def build_inventory_portal():
     print(f"[{time.strftime('%X')}] Starting up-to-the-minute 10B Parts Inventory build...")
     
+    # IMPORTANT: BigQuery is ALWAYS queried now, even when a scraped SDI
+    # Zeus export is available. Reason (found 2026-09): SDI's "Manage Field
+    # Inventory" export only ever covers technician TRUCK stock -- it has
+    # no concept of GM/HVACR/FE/Store role rows at all. An earlier version
+    # let `use_sdi` skip the BigQuery query entirely and fully replace
+    # `parts` with SDI-only rows (all hardcoded role="Tech"), which
+    # silently deleted every GM/HVACR/FE/Store row AND all "store location"
+    # rows from the live dashboard the moment a scrape existed on disk.
+    # Fix: always pull the full BigQuery snapshot for role diversity, and
+    # (below) only SWAP OUT the Tech-role rows for SDI's fresher truck data
+    # -- never wholesale-replace everything.
     use_sdi = sdi_data_loader.sdi_export_available()
-    if use_sdi:
-        print("Found a scraped SDI Zeus export (sdi_scraper/sdi_inventory_raw.json) --")
-        print("using it as the source of truth instead of the BigQuery semantic layer.")
-        rows = []  # SDI parts are built directly further down; nothing to loop over here.
-    else:
-        client = get_bigquery_client()
-        if not client:
-            print("Error: BigQuery client not available. Please verify credentials!")
-            return
+    client = get_bigquery_client()
+    if not client:
+        print("Error: BigQuery client not available. Please verify credentials!")
+        return
 
-        # STEP 1 - Query BigQuery for all 15 sub-markets
-        print("Querying semantic_fs_zeus_parts_inventory from BigQuery...")
-        query = """
+    # STEP 1 - Query BigQuery for all 15 sub-markets
+    print("Querying semantic_fs_zeus_parts_inventory from BigQuery...")
+    query = """
     SELECT
       fs_sub_market,
       COALESCE(fs_manager_name,'')          AS fs_mgr,
@@ -490,10 +516,10 @@ def build_inventory_portal():
       )
     ORDER BY fs_sub_market, tech, tcost DESC
     """
-    
-        query_job = client.query(query)
-        rows = list(query_job.result())
-        print(f"Successfully retrieved {len(rows)} parts inventory rows!")
+
+    query_job = client.query(query)
+    rows = list(query_job.result())
+    print(f"Successfully retrieved {len(rows)} parts inventory rows!")
 
     # STEP 2 - Parse and Clean Technicians/Managers
     enriched = load_enriched_parts()
@@ -615,12 +641,21 @@ def build_inventory_portal():
         })
 
     if use_sdi:
-        parts = sdi_data_loader.load_parts_from_sdi(HIER, MGR_TO_SUB)
-        for p in parts:
+        # SDI only ever covers Tech-role truck stock, so SWAP those rows
+        # out for the fresher SDI data -- but KEEP every non-Tech row
+        # (GM/HVACR/FE/Store, and the store-location rows) exactly as
+        # BigQuery reported them, since SDI has no equivalent data for
+        # those at all. Never wholesale-replace `parts` here again.
+        sdi_parts = sdi_data_loader.load_parts_from_sdi(HIER, MGR_TO_SUB)
+        for p in sdi_parts:
             pno_upper = p['pno'].upper()
             p['img'] = (manual_imgs.get(pno_upper)
                         or (enriched.get(pno_upper) or {}).get('image_url')
                         or '')
+        non_tech_parts = [p for p in parts if p['role'] != 'Tech']
+        print(f"Merging {len(non_tech_parts)} non-Tech BigQuery rows (GM/HVACR/FE/Store) "
+              f"with {len(sdi_parts)} fresher SDI tech-truck rows...")
+        parts = non_tech_parts + sdi_parts
 
     # Group tech summaries dynamically based on correct manager alignments!
     tech_map = defaultdict(lambda:{"items":0,"value":0.0,"area":"","role":"","mgr":"","rm":"","sub":""})
@@ -652,6 +687,13 @@ def build_inventory_portal():
     sub_i={v:i for i,v in enumerate(subs)}
     role_i={v:i for i,v in enumerate(roles)}
 
+    # Only ship equivalent-parts entries for part numbers that actually
+    # appear in THIS region's inventory -- no point bloating the payload
+    # with cross-refs for parts nobody here carries.
+    equiv_all = load_equivalent_parts()
+    inventory_pnos = set(p['pno'].upper() for p in parts if p.get('pno'))
+    equiv_map = {pno: alts for pno, alts in equiv_all.items() if pno in inventory_pnos}
+
     compact_parts=[]
     for p in parts:
         compact_parts.append([
@@ -671,7 +713,8 @@ def build_inventory_portal():
         ])
 
     compact_payload={"rms":rms,"mgrs":mgrs,"techs":techs_l,"subs":subs,"roles":roles,
-                     "parts":compact_parts,"tech_rows":compact_techs,"hier":HIER}
+                     "parts":compact_parts,"tech_rows":compact_techs,"hier":HIER,
+                     "equiv":equiv_map}
 
     # STEP 4 - Compile HTML Dashboards for all 15 managers + Hub index
     print("Compiling all 15 sub-market dashboards using accurate mappings...")

@@ -29,10 +29,10 @@ def select_react_select(page, for_id, option_text):
     control.click()
     inp = control.locator('input[type="text"]')
     inp.fill(option_text)
-    page.wait_for_timeout(1000)
+    page.wait_for_timeout(100)
     option = page.locator('div[id*="react-select"][id*="option"]', has_text=option_text).first
     option.click()
-    page.wait_for_timeout(300)
+    page.wait_for_timeout(30)
 
 
 def get_num_records(page):
@@ -67,14 +67,14 @@ def click_next_page(page):
     if 'disabled' in cls:
         return False
     next_li.locator('a').click()
-    page.wait_for_timeout(2500)
+    page.wait_for_timeout(250)
     wait_for_loader_gone(page)
     return True
 
 
 def scrape_subregion(page, sub):
     select_react_select(page, 'Subregion', sub)
-    page.wait_for_timeout(500)
+    page.wait_for_timeout(100)
     loaded = False
     for retry in range(3):
         page.get_by_role('button', name='Get data').click()
@@ -129,19 +129,19 @@ def main():
             except Exception:
                 print(f"load attempt {attempt+1} failed")
                 browser.close()
-                time.sleep(2)
+                time.sleep(0.3)
         if not ok:
             raise SystemExit("could not load page")
 
-        page.wait_for_timeout(6000)
+        page.wait_for_timeout(1500)
         try:
             page.get_by_text("Ok, Got it").click(timeout=3000)
         except Exception:
             pass
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(200)
 
         select_react_select(page, "Region", "10B")
-        page.wait_for_timeout(1000)
+        page.wait_for_timeout(200)
 
         try:
             page.get_by_text("Include zero QTY").click(timeout=3000)

@@ -59,7 +59,17 @@ EXCLUDED_TRUCK_IDS = {"33018"}
 # of these (an off-site location, not a truck) -- every row located there
 # gets consolidated under a single "Storage <location>" sidebar entry
 # regardless of whose login happened to be active when it was logged.
-STORAGE_ONLY_LOCATIONS = {"X6391"}
+# Confirmed 2026-09-19: X6391 is a truck stock is physically
+# Michael Leanox's team's location (367-A) -- Zeus's own Subregion filter
+# is unreliable geography tagging (see the manager-lookup comment below),
+# so rows at these locations sometimes surface when querying OTHER
+# subregions too (e.g. 366-A). Force these locations to their real home
+# subregion/manager unconditionally so they only ever show up on the one
+# team's page they actually belong to, never a neighboring team's.
+STORAGE_LOCATION_HOME_SUB = {
+    "X6391": "367-A",
+}
+STORAGE_ONLY_LOCATIONS = set(STORAGE_LOCATION_HOME_SUB)
 
 
 def _clean_qty(raw):
@@ -117,6 +127,7 @@ def load_parts_from_sdi(hier, mgr_to_sub):
     unmatched_cost_count = 0
     fallback_mgr_count = 0
     manual_override_count = 0
+    seen_storage_rows = set()
 
     for sub_queried, rows in raw.items():
         default_h = hier.get(sub_queried)
@@ -140,9 +151,11 @@ def load_parts_from_sdi(hier, mgr_to_sub):
             # Consolidate shared-storage locations under one clean sidebar
             # entry before any manager/role lookups happen -- see
             # STORAGE_ONLY_LOCATIONS above.
-            for storage_loc in STORAGE_ONLY_LOCATIONS:
-                if storage_loc in location:
-                    tech = f"Storage {storage_loc}"
+            storage_loc = None
+            for candidate in STORAGE_ONLY_LOCATIONS:
+                if candidate in location:
+                    storage_loc = candidate
+                    tech = f"Storage {candidate}"
                     break
 
             # Real manager identity comes from BigQuery's cleaned per-tech
@@ -155,7 +168,14 @@ def load_parts_from_sdi(hier, mgr_to_sub):
             # 15 known managers (several of them carry their own truck),
             # they obviously manage themselves -- no lookup needed.
             override_mgr = manual_overrides.get(tech.upper())
-            if override_mgr and override_mgr.upper() in mgr_to_sub:
+            if storage_loc:
+                # Storage locations always belong to their fixed home team,
+                # regardless of which subregion query happened to surface
+                # this row -- see STORAGE_LOCATION_HOME_SUB above.
+                sub = STORAGE_LOCATION_HOME_SUB[storage_loc]
+                h = hier[sub]
+                mgr = h["mgr"]
+            elif override_mgr and override_mgr.upper() in mgr_to_sub:
                 # Human-confirmed ground truth -- beats every other source,
                 # including BigQuery, since Mike knows his own org chart
                 # better than a stale semantic table does.
@@ -194,6 +214,18 @@ def load_parts_from_sdi(hier, mgr_to_sub):
             tcost = round(qty * ucost, 2)
 
             desc = (r.get("Description", "") or "").replace("More", "").strip()
+
+            if storage_loc:
+                # Zeus's Subregion filter can return the same physical
+                # storage-location row under more than one subregion query
+                # (that's exactly why these rows needed forcing to a fixed
+                # home team above) -- dedupe so the same physical part
+                # doesn't get double-counted just because it got scraped
+                # twice.
+                dedup_key = (storage_loc, pno, qty, desc)
+                if dedup_key in seen_storage_rows:
+                    continue
+                seen_storage_rows.add(dedup_key)
 
             parts.append({
                 "sub": sub,

@@ -52,17 +52,14 @@ TECH_TO_TRADE_FILE = BASE_DIR / "tech_to_trade.json"
 # don't own SDI itself and can't fix the source data directly.
 EXCLUDED_TRUCK_IDS = {"33018"}
 
-# Some inventory gets logged under a manager's own name by mistake when it's
-# really just shared storage sitting at a location, not personal truck stock
-# they own. Confirmed 2026-09-19: Michael Leanox isn't a field tech doing
-# service work, so rows logged under his name at location X6391 are really
-# storage at that off-site location -- rename them so they show up under a
-# clear "Storage <location>" sidebar entry instead of polluting a manager's
-# own truck-stock listing. Keyed by tech name (upper) -> set of location
-# substrings that should trigger the rename.
-TECH_TO_STORAGE_LOCATION_OVERRIDES = {
-    "MICHAEL LEANOX": {"X6391"},
-}
+# Some locations are shared storage, not any one tech's personal truck --
+# whoever happens to be logged into SDI when parts get dropped off there
+# gets recorded as the "tech", which scatters one storage spot's inventory
+# across a bunch of unrelated tech names. Confirmed 2026-09-19: X6391 is one
+# of these (an off-site location, not a truck) -- every row located there
+# gets consolidated under a single "Storage <location>" sidebar entry
+# regardless of whose login happened to be active when it was logged.
+STORAGE_ONLY_LOCATIONS = {"X6391"}
 
 
 def _clean_qty(raw):
@@ -140,11 +137,10 @@ def load_parts_from_sdi(hier, mgr_to_sub):
             if not tech:
                 continue
 
-            # Rename storage-disguised-as-a-manager rows (see
-            # TECH_TO_STORAGE_LOCATION_OVERRIDES above) before any
-            # manager/role lookups happen, so they group under their own
-            # clean "Storage <location>" sidebar entry.
-            for storage_loc in TECH_TO_STORAGE_LOCATION_OVERRIDES.get(tech.upper(), ()):
+            # Consolidate shared-storage locations under one clean sidebar
+            # entry before any manager/role lookups happen -- see
+            # STORAGE_ONLY_LOCATIONS above.
+            for storage_loc in STORAGE_ONLY_LOCATIONS:
                 if storage_loc in location:
                     tech = f"Storage {storage_loc}"
                     break

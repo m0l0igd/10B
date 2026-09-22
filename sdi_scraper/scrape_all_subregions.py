@@ -148,6 +148,22 @@ def main():
         except Exception as e:
             print("could not check Include zero QTY:", e)
 
+        # Warm-up query: the very first "Get data" click after selecting
+        # a Region tends to hit a race where #SDILoader gets stuck
+        # intercepting clicks for the full 30s timeout (observed hitting
+        # whichever subregion happens to be first in SUBREGIONS -- not a
+        # property of any specific subregion). Doing one throwaway query
+        # first lets the page fully settle so the real loop below runs
+        # reliably. Result is discarded; the real loop re-scrapes it.
+        if any(sub not in all_data or not all_data[sub] for sub in SUBREGIONS):
+            print("Warm-up query to settle the page after region selection...")
+            try:
+                warm_sub = SUBREGIONS[-1]
+                scrape_subregion(page, warm_sub)
+                print(f"Warm-up on {warm_sub} done (discarded, will be re-scraped for real below).")
+            except Exception as e:
+                print(f"Warm-up query failed (non-fatal, continuing anyway): {e}")
+
         for sub in SUBREGIONS:
             if sub in all_data and all_data[sub]:
                 print(f"Skipping {sub}, already scraped ({len(all_data[sub])} rows)")
